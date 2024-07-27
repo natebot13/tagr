@@ -15,11 +15,16 @@ dependencies:
   file_picker: ^8.0.6
   filesystem_picker: ^4.1.0
   mime:
+  protobuf: 
+  path:
+  flutter_resizable_container: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  protoc_builder: 
+  build_runner:
 
 flutter:
   uses-material-design: true

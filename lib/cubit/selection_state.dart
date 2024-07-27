@@ -3,7 +3,7 @@ part of 'selection_cubit.dart';
 @immutable
 sealed class SelectionState {}
 
-final class SelectionInitial extends SelectionState {}
+final class SelectionNone extends SelectionState {}
 
 final class SelectionSingle extends SelectionState {
   final int selected;

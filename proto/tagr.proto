@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+// message CustomProperty {
+//   oneof type {
+//     bool boolValue = 1;
+//     int intValue = 2;
+//     float floatValue = 3;
+//     string stringValue = 4;
+//     List list = 5;
+//   }
+// }
+
+// message List {
+//   repeated CustomProperty list = 1;
+// }
+
+message Vault {
+  repeated VaultFile files = 1;
+  map<string, VaultTagType> tagTypes = 2;
+}
+
+message VaultFile {
+  // Should always be relative to the vault file
+  string path = 1;
+  repeated VaultTagValue tags = 2;
+}
+
+message VaultTagType {
+  string name = 1;
+  string category = 2;
+  ValueType type = 3;
+}
+
+message VaultTagValue {
+  string name = 1;
+  Value value = 2;
+}
+
+enum ValueType {
+  bool = 0;
+  string = 1;
+  int = 2;
+  float = 3;
+  list = 4;
+}
+
+message Value {
+  oneof value {
+    bool boolValue = 1;
+    string stringValue = 2;
+    int32 intValue = 3;
+    float floatValue = 4;
+    ListValue listValue = 5;
+  }
+}
+
+message ListValue { repeated Value values = 1; }

@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 part 'selection_state.dart';
 
 class SelectionCubit extends Cubit<SelectionState> {
-  SelectionCubit() : super(SelectionInitial());
+  SelectionCubit() : super(SelectionNone());
 
   void select(int i) {
     final state_ = state;
@@ -19,7 +19,7 @@ class SelectionCubit extends Cubit<SelectionState> {
     if (selections.contains(i)) {
       final diff = selections.difference({i});
       if (diff.isEmpty) {
-        emit(SelectionInitial());
+        emit(SelectionNone());
       } else {
         emit(SelectionMultiple(diff));
       }

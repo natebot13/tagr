@@ -1,0 +1,1 @@
+const vaultFilename = '.tagr';
