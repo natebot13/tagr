@@ -6,34 +6,34 @@ part 'selection_state.dart';
 class SelectionCubit extends Cubit<SelectionState> {
   SelectionCubit() : super(SelectionNone());
 
-  void select(int i) {
+  void select(String id) {
     final state_ = state;
     if (state_ is SelectionMultiple) {
-      _addOrRemoveSelection(i, state_.selected);
+      _addOrRemoveSelection(id, state_.selected);
     } else {
-      emit(SelectionSingle(i));
+      emit(SelectionSingle(id));
     }
   }
 
-  void _addOrRemoveSelection(int i, Set<int> selections) {
-    if (selections.contains(i)) {
-      final diff = selections.difference({i});
+  void _addOrRemoveSelection(String id, Set<String> selections) {
+    if (selections.contains(id)) {
+      final diff = selections.difference({id});
       if (diff.isEmpty) {
         emit(SelectionNone());
       } else {
         emit(SelectionMultiple(diff));
       }
     } else {
-      emit(SelectionMultiple({...selections, i}));
+      emit(SelectionMultiple({...selections, id}));
     }
   }
 
-  void longSelect(int i) {
+  void longSelect(String id) {
     final state_ = state;
     if (state_ is SelectionMultiple) {
-      _addOrRemoveSelection(i, state_.selected);
+      _addOrRemoveSelection(id, state_.selected);
     } else {
-      emit(SelectionMultiple({i}));
+      emit(SelectionMultiple({id}));
     }
   }
 }

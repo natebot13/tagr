@@ -32,8 +32,7 @@ class VaultWidget extends StatelessWidget {
                   childAspectRatio: 1,
                 ),
                 itemCount: vault.files.length,
-                itemBuilder: (context, i) =>
-                    FileGridItem(i, root, vault.files[i]),
+                itemBuilder: (context, i) => FileGridItem(root, vault.files[i]),
               ),
             ),
           ),
@@ -45,13 +44,13 @@ class VaultWidget extends StatelessWidget {
 }
 
 class FileGridItem extends StatelessWidget {
-  final int index;
   final VaultFile file;
   final Directory root;
-  const FileGridItem(this.index, this.root, this.file, {super.key});
+  const FileGridItem(this.root, this.file, {super.key});
 
   @override
   Widget build(BuildContext context) {
+    String id = file.path;
     ImageProvider provider;
     final mimeType = lookupMimeType(file.path);
     if (mimeType?.contains('image') ?? false) {
@@ -61,15 +60,14 @@ class FileGridItem extends StatelessWidget {
     }
     provider = ResizeImage.resizeIfNeeded(500, null, provider);
     return GestureDetector(
-      onTap: () => BlocProvider.of<SelectionCubit>(context).select(index),
+      onTap: () => BlocProvider.of<SelectionCubit>(context).select(id),
       onLongPress: () =>
-          BlocProvider.of<SelectionCubit>(context).longSelect(index),
+          BlocProvider.of<SelectionCubit>(context).longSelect(id),
       child: BlocBuilder<SelectionCubit, SelectionState>(
         builder: (context, state) {
           BoxBorder? border;
-          final selected = (state is SelectionSingle &&
-                  state.selected == index) ||
-              (state is SelectionMultiple && state.selected.contains(index));
+          final selected = (state is SelectionSingle && state.selected == id) ||
+              (state is SelectionMultiple && state.selected.contains(id));
           if (selected) {
             border = Border.all(width: 8, color: Colors.blue);
           }

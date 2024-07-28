@@ -18,6 +18,9 @@ dependencies:
   protobuf: 
   path:
   flutter_resizable_container: ^2.0.0
+  logger: ^2.4.0
+  grouped_list: ^6.0.0
+  dart_casing: 
 
 dev_dependencies:
   flutter_test:

@@ -6,11 +6,11 @@ sealed class SelectionState {}
 final class SelectionNone extends SelectionState {}
 
 final class SelectionSingle extends SelectionState {
-  final int selected;
+  final String selected;
   SelectionSingle(this.selected);
 }
 
 final class SelectionMultiple extends SelectionState {
-  final Set<int> selected;
+  final Set<String> selected;
   SelectionMultiple(this.selected);
 }

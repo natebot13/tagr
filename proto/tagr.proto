@@ -1,57 +1,42 @@
 syntax = "proto3";
 
-// message CustomProperty {
-//   oneof type {
-//     bool boolValue = 1;
-//     int intValue = 2;
-//     float floatValue = 3;
-//     string stringValue = 4;
-//     List list = 5;
-//   }
-// }
-
-// message List {
-//   repeated CustomProperty list = 1;
-// }
-
 message Vault {
   repeated VaultFile files = 1;
-  map<string, VaultTagType> tagTypes = 2;
+
+  // Map of tagId to tag type. Using an ID makes renaming a tag is simpler
+  map<int32, TagType> tag_types = 2;
+  int32 last_tag_id = 3;
 }
 
 message VaultFile {
-  // Should always be relative to the vault file
+  // Should always be relative to the vault root
   string path = 1;
-  repeated VaultTagValue tags = 2;
+
+  // The keys should be ids from Vault.tagTypes
+  MapValue tags = 2;
 }
 
-message VaultTagType {
-  string name = 1;
-  string category = 2;
-  ValueType type = 3;
+message TagType {
+  int32 id = 1;
+  string name = 2;
+  string category = 3;
+  TagValue default_value = 4;
+
+  // Flag tags don't care about having a value. Just their presence matters
+  bool is_flag = 5;
 }
 
-message VaultTagValue {
-  string name = 1;
-  Value value = 2;
-}
-
-enum ValueType {
-  bool = 0;
-  string = 1;
-  int = 2;
-  float = 3;
-  list = 4;
-}
-
-message Value {
+message TagValue {
   oneof value {
-    bool boolValue = 1;
-    string stringValue = 2;
-    int32 intValue = 3;
-    float floatValue = 4;
-    ListValue listValue = 5;
+    bool bool_value = 1;
+    string string_value = 2;
+    int32 int_value = 3;
+    float float_value = 4;
+    ListValue list_value = 5;
+    MapValue map_value = 6;
   }
 }
 
-message ListValue { repeated Value values = 1; }
+message ListValue { repeated TagValue values = 1; }
+
+message MapValue { map<int32, TagValue> values = 1; }

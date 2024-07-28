@@ -9,21 +9,19 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'tagr.pbenum.dart';
-
-export 'tagr.pbenum.dart';
-
 class Vault extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'Vault', createEmptyInstance: create)
     ..pc<VaultFile>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'files', $pb.PbFieldType.PM, subBuilder: VaultFile.create)
-    ..m<$core.String, VaultTagType>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'tagTypes', protoName: 'tagTypes', entryClassName: 'Vault.TagTypesEntry', keyFieldType: $pb.PbFieldType.OS, valueFieldType: $pb.PbFieldType.OM, valueCreator: VaultTagType.create)
+    ..m<$core.int, TagType>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'tagTypes', entryClassName: 'Vault.TagTypesEntry', keyFieldType: $pb.PbFieldType.O3, valueFieldType: $pb.PbFieldType.OM, valueCreator: TagType.create)
+    ..a<$core.int>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'lastTagId', $pb.PbFieldType.O3)
     ..hasRequiredFields = false
   ;
 
   Vault._() : super();
   factory Vault({
     $core.Iterable<VaultFile>? files,
-    $core.Map<$core.String, VaultTagType>? tagTypes,
+    $core.Map<$core.int, TagType>? tagTypes,
+    $core.int? lastTagId,
   }) {
     final _result = create();
     if (files != null) {
@@ -31,6 +29,9 @@ class Vault extends $pb.GeneratedMessage {
     }
     if (tagTypes != null) {
       _result.tagTypes.addAll(tagTypes);
+    }
+    if (lastTagId != null) {
+      _result.lastTagId = lastTagId;
     }
     return _result;
   }
@@ -59,27 +60,36 @@ class Vault extends $pb.GeneratedMessage {
   $core.List<VaultFile> get files => $_getList(0);
 
   @$pb.TagNumber(2)
-  $core.Map<$core.String, VaultTagType> get tagTypes => $_getMap(1);
+  $core.Map<$core.int, TagType> get tagTypes => $_getMap(1);
+
+  @$pb.TagNumber(3)
+  $core.int get lastTagId => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set lastTagId($core.int v) { $_setSignedInt32(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasLastTagId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearLastTagId() => clearField(3);
 }
 
 class VaultFile extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'VaultFile', createEmptyInstance: create)
     ..aOS(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'path')
-    ..pc<VaultTagValue>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'tags', $pb.PbFieldType.PM, subBuilder: VaultTagValue.create)
+    ..aOM<MapValue>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'tags', subBuilder: MapValue.create)
     ..hasRequiredFields = false
   ;
 
   VaultFile._() : super();
   factory VaultFile({
     $core.String? path,
-    $core.Iterable<VaultTagValue>? tags,
+    MapValue? tags,
   }) {
     final _result = create();
     if (path != null) {
       _result.path = path;
     }
     if (tags != null) {
-      _result.tags.addAll(tags);
+      _result.tags = tags;
     }
     return _result;
   }
@@ -114,182 +124,161 @@ class VaultFile extends $pb.GeneratedMessage {
   void clearPath() => clearField(1);
 
   @$pb.TagNumber(2)
-  $core.List<VaultTagValue> get tags => $_getList(1);
+  MapValue get tags => $_getN(1);
+  @$pb.TagNumber(2)
+  set tags(MapValue v) { setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasTags() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTags() => clearField(2);
+  @$pb.TagNumber(2)
+  MapValue ensureTags() => $_ensure(1);
 }
 
-class VaultTagType extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'VaultTagType', createEmptyInstance: create)
-    ..aOS(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'name')
-    ..aOS(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'category')
-    ..e<ValueType>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'type', $pb.PbFieldType.OE, defaultOrMaker: ValueType.bool_, valueOf: ValueType.valueOf, enumValues: ValueType.values)
+class TagType extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'TagType', createEmptyInstance: create)
+    ..a<$core.int>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'id', $pb.PbFieldType.O3)
+    ..aOS(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'name')
+    ..aOS(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'category')
+    ..aOM<TagValue>(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'defaultValue', subBuilder: TagValue.create)
+    ..aOB(5, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'isFlag')
     ..hasRequiredFields = false
   ;
 
-  VaultTagType._() : super();
-  factory VaultTagType({
+  TagType._() : super();
+  factory TagType({
+    $core.int? id,
     $core.String? name,
     $core.String? category,
-    ValueType? type,
+    TagValue? defaultValue,
+    $core.bool? isFlag,
   }) {
     final _result = create();
+    if (id != null) {
+      _result.id = id;
+    }
     if (name != null) {
       _result.name = name;
     }
     if (category != null) {
       _result.category = category;
     }
-    if (type != null) {
-      _result.type = type;
+    if (defaultValue != null) {
+      _result.defaultValue = defaultValue;
+    }
+    if (isFlag != null) {
+      _result.isFlag = isFlag;
     }
     return _result;
   }
-  factory VaultTagType.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory VaultTagType.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  factory TagType.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory TagType.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  VaultTagType clone() => VaultTagType()..mergeFromMessage(this);
+  TagType clone() => TagType()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  VaultTagType copyWith(void Function(VaultTagType) updates) => super.copyWith((message) => updates(message as VaultTagType)) as VaultTagType; // ignore: deprecated_member_use
+  TagType copyWith(void Function(TagType) updates) => super.copyWith((message) => updates(message as TagType)) as TagType; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
-  static VaultTagType create() => VaultTagType._();
-  VaultTagType createEmptyInstance() => create();
-  static $pb.PbList<VaultTagType> createRepeated() => $pb.PbList<VaultTagType>();
+  static TagType create() => TagType._();
+  TagType createEmptyInstance() => create();
+  static $pb.PbList<TagType> createRepeated() => $pb.PbList<TagType>();
   @$core.pragma('dart2js:noInline')
-  static VaultTagType getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<VaultTagType>(create);
-  static VaultTagType? _defaultInstance;
+  static TagType getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<TagType>(create);
+  static TagType? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get name => $_getSZ(0);
+  $core.int get id => $_getIZ(0);
   @$pb.TagNumber(1)
-  set name($core.String v) { $_setString(0, v); }
+  set id($core.int v) { $_setSignedInt32(0, v); }
   @$pb.TagNumber(1)
-  $core.bool hasName() => $_has(0);
+  $core.bool hasId() => $_has(0);
   @$pb.TagNumber(1)
-  void clearName() => clearField(1);
+  void clearId() => clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get category => $_getSZ(1);
+  $core.String get name => $_getSZ(1);
   @$pb.TagNumber(2)
-  set category($core.String v) { $_setString(1, v); }
+  set name($core.String v) { $_setString(1, v); }
   @$pb.TagNumber(2)
-  $core.bool hasCategory() => $_has(1);
+  $core.bool hasName() => $_has(1);
   @$pb.TagNumber(2)
-  void clearCategory() => clearField(2);
+  void clearName() => clearField(2);
 
   @$pb.TagNumber(3)
-  ValueType get type => $_getN(2);
+  $core.String get category => $_getSZ(2);
   @$pb.TagNumber(3)
-  set type(ValueType v) { setField(3, v); }
+  set category($core.String v) { $_setString(2, v); }
   @$pb.TagNumber(3)
-  $core.bool hasType() => $_has(2);
+  $core.bool hasCategory() => $_has(2);
   @$pb.TagNumber(3)
-  void clearType() => clearField(3);
+  void clearCategory() => clearField(3);
+
+  @$pb.TagNumber(4)
+  TagValue get defaultValue => $_getN(3);
+  @$pb.TagNumber(4)
+  set defaultValue(TagValue v) { setField(4, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasDefaultValue() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDefaultValue() => clearField(4);
+  @$pb.TagNumber(4)
+  TagValue ensureDefaultValue() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  $core.bool get isFlag => $_getBF(4);
+  @$pb.TagNumber(5)
+  set isFlag($core.bool v) { $_setBool(4, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasIsFlag() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearIsFlag() => clearField(5);
 }
 
-class VaultTagValue extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'VaultTagValue', createEmptyInstance: create)
-    ..aOS(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'name')
-    ..aOM<Value>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'value', subBuilder: Value.create)
-    ..hasRequiredFields = false
-  ;
-
-  VaultTagValue._() : super();
-  factory VaultTagValue({
-    $core.String? name,
-    Value? value,
-  }) {
-    final _result = create();
-    if (name != null) {
-      _result.name = name;
-    }
-    if (value != null) {
-      _result.value = value;
-    }
-    return _result;
-  }
-  factory VaultTagValue.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory VaultTagValue.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
-  VaultTagValue clone() => VaultTagValue()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  VaultTagValue copyWith(void Function(VaultTagValue) updates) => super.copyWith((message) => updates(message as VaultTagValue)) as VaultTagValue; // ignore: deprecated_member_use
-  $pb.BuilderInfo get info_ => _i;
-  @$core.pragma('dart2js:noInline')
-  static VaultTagValue create() => VaultTagValue._();
-  VaultTagValue createEmptyInstance() => create();
-  static $pb.PbList<VaultTagValue> createRepeated() => $pb.PbList<VaultTagValue>();
-  @$core.pragma('dart2js:noInline')
-  static VaultTagValue getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<VaultTagValue>(create);
-  static VaultTagValue? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $core.String get name => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set name($core.String v) { $_setString(0, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasName() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearName() => clearField(1);
-
-  @$pb.TagNumber(2)
-  Value get value => $_getN(1);
-  @$pb.TagNumber(2)
-  set value(Value v) { setField(2, v); }
-  @$pb.TagNumber(2)
-  $core.bool hasValue() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearValue() => clearField(2);
-  @$pb.TagNumber(2)
-  Value ensureValue() => $_ensure(1);
-}
-
-enum Value_Value {
+enum TagValue_Value {
   boolValue, 
   stringValue, 
   intValue, 
   floatValue, 
   listValue, 
+  mapValue, 
   notSet
 }
 
-class Value extends $pb.GeneratedMessage {
-  static const $core.Map<$core.int, Value_Value> _Value_ValueByTag = {
-    1 : Value_Value.boolValue,
-    2 : Value_Value.stringValue,
-    3 : Value_Value.intValue,
-    4 : Value_Value.floatValue,
-    5 : Value_Value.listValue,
-    0 : Value_Value.notSet
+class TagValue extends $pb.GeneratedMessage {
+  static const $core.Map<$core.int, TagValue_Value> _TagValue_ValueByTag = {
+    1 : TagValue_Value.boolValue,
+    2 : TagValue_Value.stringValue,
+    3 : TagValue_Value.intValue,
+    4 : TagValue_Value.floatValue,
+    5 : TagValue_Value.listValue,
+    6 : TagValue_Value.mapValue,
+    0 : TagValue_Value.notSet
   };
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'Value', createEmptyInstance: create)
-    ..oo(0, [1, 2, 3, 4, 5])
-    ..aOB(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'boolValue', protoName: 'boolValue')
-    ..aOS(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'stringValue', protoName: 'stringValue')
-    ..a<$core.int>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'intValue', $pb.PbFieldType.O3, protoName: 'intValue')
-    ..a<$core.double>(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'floatValue', $pb.PbFieldType.OF, protoName: 'floatValue')
-    ..aOM<ListValue>(5, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'listValue', protoName: 'listValue', subBuilder: ListValue.create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'TagValue', createEmptyInstance: create)
+    ..oo(0, [1, 2, 3, 4, 5, 6])
+    ..aOB(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'boolValue')
+    ..aOS(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'stringValue')
+    ..a<$core.int>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'intValue', $pb.PbFieldType.O3)
+    ..a<$core.double>(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'floatValue', $pb.PbFieldType.OF)
+    ..aOM<ListValue>(5, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'listValue', subBuilder: ListValue.create)
+    ..aOM<MapValue>(6, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'mapValue', subBuilder: MapValue.create)
     ..hasRequiredFields = false
   ;
 
-  Value._() : super();
-  factory Value({
+  TagValue._() : super();
+  factory TagValue({
     $core.bool? boolValue,
     $core.String? stringValue,
     $core.int? intValue,
     $core.double? floatValue,
     ListValue? listValue,
+    MapValue? mapValue,
   }) {
     final _result = create();
     if (boolValue != null) {
@@ -307,30 +296,33 @@ class Value extends $pb.GeneratedMessage {
     if (listValue != null) {
       _result.listValue = listValue;
     }
+    if (mapValue != null) {
+      _result.mapValue = mapValue;
+    }
     return _result;
   }
-  factory Value.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory Value.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  factory TagValue.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory TagValue.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  Value clone() => Value()..mergeFromMessage(this);
+  TagValue clone() => TagValue()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  Value copyWith(void Function(Value) updates) => super.copyWith((message) => updates(message as Value)) as Value; // ignore: deprecated_member_use
+  TagValue copyWith(void Function(TagValue) updates) => super.copyWith((message) => updates(message as TagValue)) as TagValue; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
-  static Value create() => Value._();
-  Value createEmptyInstance() => create();
-  static $pb.PbList<Value> createRepeated() => $pb.PbList<Value>();
+  static TagValue create() => TagValue._();
+  TagValue createEmptyInstance() => create();
+  static $pb.PbList<TagValue> createRepeated() => $pb.PbList<TagValue>();
   @$core.pragma('dart2js:noInline')
-  static Value getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Value>(create);
-  static Value? _defaultInstance;
+  static TagValue getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<TagValue>(create);
+  static TagValue? _defaultInstance;
 
-  Value_Value whichValue() => _Value_ValueByTag[$_whichOneof(0)]!;
+  TagValue_Value whichValue() => _TagValue_ValueByTag[$_whichOneof(0)]!;
   void clearValue() => clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -379,17 +371,28 @@ class Value extends $pb.GeneratedMessage {
   void clearListValue() => clearField(5);
   @$pb.TagNumber(5)
   ListValue ensureListValue() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  MapValue get mapValue => $_getN(5);
+  @$pb.TagNumber(6)
+  set mapValue(MapValue v) { setField(6, v); }
+  @$pb.TagNumber(6)
+  $core.bool hasMapValue() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearMapValue() => clearField(6);
+  @$pb.TagNumber(6)
+  MapValue ensureMapValue() => $_ensure(5);
 }
 
 class ListValue extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'ListValue', createEmptyInstance: create)
-    ..pc<Value>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'values', $pb.PbFieldType.PM, subBuilder: Value.create)
+    ..pc<TagValue>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'values', $pb.PbFieldType.PM, subBuilder: TagValue.create)
     ..hasRequiredFields = false
   ;
 
   ListValue._() : super();
   factory ListValue({
-    $core.Iterable<Value>? values,
+    $core.Iterable<TagValue>? values,
   }) {
     final _result = create();
     if (values != null) {
@@ -419,6 +422,47 @@ class ListValue extends $pb.GeneratedMessage {
   static ListValue? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.List<Value> get values => $_getList(0);
+  $core.List<TagValue> get values => $_getList(0);
+}
+
+class MapValue extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'MapValue', createEmptyInstance: create)
+    ..m<$core.int, TagValue>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'values', entryClassName: 'MapValue.ValuesEntry', keyFieldType: $pb.PbFieldType.O3, valueFieldType: $pb.PbFieldType.OM, valueCreator: TagValue.create)
+    ..hasRequiredFields = false
+  ;
+
+  MapValue._() : super();
+  factory MapValue({
+    $core.Map<$core.int, TagValue>? values,
+  }) {
+    final _result = create();
+    if (values != null) {
+      _result.values.addAll(values);
+    }
+    return _result;
+  }
+  factory MapValue.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory MapValue.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  MapValue clone() => MapValue()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  MapValue copyWith(void Function(MapValue) updates) => super.copyWith((message) => updates(message as MapValue)) as MapValue; // ignore: deprecated_member_use
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static MapValue create() => MapValue._();
+  MapValue createEmptyInstance() => create();
+  static $pb.PbList<MapValue> createRepeated() => $pb.PbList<MapValue>();
+  @$core.pragma('dart2js:noInline')
+  static MapValue getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MapValue>(create);
+  static MapValue? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.Map<$core.int, TagValue> get values => $_getMap(0);
 }
 
