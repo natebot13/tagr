@@ -148,14 +148,14 @@ class VaultCubit extends Cubit<VaultState> {
     });
   }
 
-  void removeTag(Set<String> fileIds, int tagTypeId) {
+  void removeTag({required Set<String> from, required int tagId}) {
     _updateVault((state, vault) {
       bool changed = false;
-      for (final fileId in fileIds) {
+      for (final fileId in from) {
         final vaultFile = _getVaultFile(fileId, state, vault);
         if (vaultFile == null) return false;
         if (!vaultFile.hasTags()) return false;
-        if (vaultFile.tags.values.remove(tagTypeId) != null) {
+        if (vaultFile.tags.values.remove(tagId) != null) {
           if (vaultFile.tags.values.isEmpty) vaultFile.clearTags();
           changed = true;
         }
@@ -174,6 +174,21 @@ class VaultCubit extends Cubit<VaultState> {
         isFlag: true,
         category: 'tags',
       );
+      return true;
+    });
+  }
+
+  /// Pass a new instance of a TagType to merge with the current tag type. Don't
+  /// reuse the passed update object as it gets updated in place.
+  void updateTagType(int tagId, TagType update) {
+    _updateVault((state, vault) {
+      final tagType = vault.tagTypes[tagId];
+      if (tagType == null) return false;
+
+      final updated = tagType.deepCopy()..mergeFromMessage(update);
+      if (tagType == updated) return false;
+
+      tagType.mergeFromMessage(update);
       return true;
     });
   }

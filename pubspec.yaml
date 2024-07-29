@@ -21,6 +21,7 @@ dependencies:
   logger: ^2.4.0
   grouped_list: ^6.0.0
   dart_casing: 
+  collection:
 
 dev_dependencies:
   flutter_test:

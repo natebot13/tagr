@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:mime/mime.dart';
@@ -60,14 +61,16 @@ class FileGridItem extends StatelessWidget {
     }
     provider = ResizeImage.resizeIfNeeded(500, null, provider);
     return GestureDetector(
-      onTap: () => BlocProvider.of<SelectionCubit>(context).select(id),
+      onTap: () => BlocProvider.of<SelectionCubit>(context)
+          .select(id, multi: HardwareKeyboard.instance.isControlPressed),
       onLongPress: () =>
           BlocProvider.of<SelectionCubit>(context).longSelect(id),
       child: BlocBuilder<SelectionCubit, SelectionState>(
         builder: (context, state) {
           BoxBorder? border;
-          final selected = (state is SelectionSingle && state.selected == id) ||
-              (state is SelectionMultiple && state.selected.contains(id));
+          final selected =
+              (state is SelectionSingle && state.selected.contains(id)) ||
+                  (state is SelectionMultiple && state.selected.contains(id));
           if (selected) {
             border = Border.all(width: 8, color: Colors.blue);
           }
