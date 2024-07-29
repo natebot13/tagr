@@ -108,8 +108,10 @@ class PreviewTags extends StatelessWidget {
                             .toList(),
                       ),
                     if (flags.containsKey(false))
-                      ...flags[false]!
-                          .map((entry) => TagValueEditor(entry.value)),
+                      ...flags[false]!.map((entry) => TagValueEditor(
+                            entry.value,
+                            key: ValueKey('TagValueEditor${entry.key}'),
+                          )),
                   ],
                 );
               },

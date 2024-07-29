@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:tagr/cubit/vault_cubit.dart';
 import 'package:tagr/src/vault_widget.dart';
 
@@ -31,7 +32,18 @@ class HomeWidget extends StatelessWidget {
 
     // Valid path checking
     if (selectedPath == null) return;
+
+    final storagePerms = await Permission.manageExternalStorage.request();
+
     if (!context.mounted) return;
+
+    if (storagePerms.isDenied) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Storage permissions are needed"),
+      ));
+      return;
+    }
+
     if (selectedPath == '/' || selectedPath == 'C:\\') {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("I'd recommend not picking the root directory"),
