@@ -1,6 +1,8 @@
 {
   "dart.useLegacyDebugAdapters": true,
   "cSpell.words": [
+    "autofocus",
+    "LTRB",
     "tagr"
   ],
 }

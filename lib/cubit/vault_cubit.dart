@@ -58,22 +58,27 @@ class VaultCubit extends Cubit<VaultState> {
     _updateVault(_refreshFiles);
   }
 
-  Future<void> _updateVault(
+  Future<bool> _updateVault(
     FutureOr<bool> Function(VaultOpen, Vault) fn,
   ) async {
-    await _withVaultOpen((state) async {
+    final result = await _withVaultOpen((state) async {
       final newVault = state.vault.deepCopy();
-      if (await fn(state, newVault)) {
-        emit(VaultOpen(state.root, newVault..freeze()));
-        await _saveVault(state.root, newVault);
-      } else {
+      try {
+        if (await fn(state, newVault)) {
+          emit(VaultOpen(state.root, newVault..freeze()));
+          await _saveVault(state.root, newVault);
+          return true;
+        }
+      } catch (e) {
         emit(VaultOpen(
           state.root,
           state.vault,
-          ephemeralIssue: 'Action failed',
+          ephemeralIssue: 'Error: $e',
         ));
       }
+      return false;
     });
+    return result ?? false;
   }
 
   Future<T?> _withVaultOpen<T>(FutureOr<T> Function(VaultOpen state) fn) async {
@@ -164,12 +169,16 @@ class VaultCubit extends Cubit<VaultState> {
     });
   }
 
-  void createTag() {
-    _updateVault((state, vault) {
+  Future<bool> createTag({String? name}) async {
+    return await _updateVault((state, vault) {
+      if (name != null && state.tagMap.containsKey(name.toLowerCase())) {
+        logger.i('Tag [$name] already exists');
+        return false;
+      }
       final tagId = vault.lastTagId++;
       vault.tagTypes[tagId] = TagType(
         id: tagId,
-        name: 'tag_$tagId',
+        name: name ?? 'tag_$tagId',
         defaultValue: TagValue(boolValue: true),
         isFlag: true,
         category: 'tags',

@@ -24,10 +24,14 @@ final class VaultOpen extends VaultState {
   final Directory root;
   final Vault vault;
   final Map<String, int> fileMap;
+  final Map<String, int> tagMap;
   VaultOpen(this.root, this.vault, {this.ephemeralIssue})
+      // This may be slow for many files. Need to think if this is necessary
       : fileMap = vault.files
             .asMap()
-            .map((index, file) => MapEntry(file.path, index));
+            .map((index, file) => MapEntry(file.path, index)),
+        tagMap = vault.tagTypes
+            .map((id, type) => MapEntry(type.name.toLowerCase(), id));
 
   String fullPath(String id) {
     final i = fileMap[id]!;

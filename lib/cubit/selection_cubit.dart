@@ -10,7 +10,11 @@ class SelectionCubit extends Cubit<SelectionState> {
     if (multi) {
       _addOrRemoveSelection(id, state.selected);
     } else {
-      emit(SelectionSingle(id));
+      if (state.selected.contains(id)) {
+        emit(SelectionNone());
+      } else {
+        emit(SelectionSingle(id));
+      }
     }
   }
 
