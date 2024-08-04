@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -8,54 +7,63 @@ import 'package:flutter/widgets.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 import 'package:protobuf/protobuf.dart';
-import 'package:tagr/src/constants.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
-import 'package:tagr/src/generated/tagr.pbserver.dart';
 
 import 'package:logger/logger.dart';
+import 'package:tagr/src/repository/vault_repository.dart';
 
 part 'vault_state.dart';
 
 final logger = Logger();
 
 class VaultCubit extends Cubit<VaultState> {
-  VaultCubit() : super(VaultClosed());
-
-  void openVault(String path) async {
-    emit(VaultLoading());
-    if (!await FileSystemEntity.isDirectory(path)) {
-      emit(VaultLoadFailure('Path is not a directory.'));
-    }
-
-    final root = Directory(path);
-
-    final vaultFile = File('$path/$vaultFilename');
-    final vault = Vault();
-    if (await vaultFile.exists()) {
-      final bytes = await vaultFile.readAsBytes();
-      vault.mergeFromBuffer(bytes);
-    } else {
-      logger.i('Creating a new vault');
-      await _refreshFiles(VaultOpen(root, vault), vault);
-      _saveVault(root, vault);
-    }
-    emit(VaultOpen(root, vault..freeze()));
+  final VaultRepository _repository;
+  StreamSubscription<VaultUpdate>? subscription;
+  VaultCubit(VaultRepository repository)
+      : _repository = repository,
+        super(VaultClosed()) {
+    subscription = _repository.vault.listen((vaultUpdate) {
+      emit(VaultOpen(vaultUpdate.root, vaultUpdate.vault));
+    });
   }
 
-  /// Modifies the vault in-place
-  Future<bool> _refreshFiles(VaultOpen state, Vault vault) async {
-    bool changed = false;
-    await for (final file in listFiles(state.root)) {
-      if (state.fileMap.containsKey(file.path)) continue;
-      vault.files.add(_buildVaultFile(state.root, file));
-      changed = true;
+  @override
+  Future<void> close() {
+    subscription?.cancel();
+    return super.close();
+  }
+
+  Future<void> openVault(String path) async {
+    emit(VaultLoading());
+    await changeRoot(path);
+  }
+
+  Future<void> changeRoot(String path) async {
+    // Copy for type promotion
+    final _state = state;
+
+    if (_state is VaultOpen && _state.root.path == path) return;
+
+    if (!await FileSystemEntity.isDirectory(path)) {
+      if (_state is VaultOpen) {
+        emit(VaultOpen(
+          _state.root,
+          _state.vault,
+          ephemeralIssue: 'Failed to open. $path is not a directory.',
+        ));
+      } else {
+        emit(VaultLoadFailure('Failed to open. $path is not a directory.'));
+      }
     }
-    return changed;
+    _repository.loadVault(Directory(path));
   }
 
   void refreshFilesInVault() {
-    _updateVault(_refreshFiles);
+    _updateVault((state, vault) {
+      _repository.refreshFiles(state.root, vault);
+      return true;
+    });
   }
 
   Future<bool> _updateVault(
@@ -65,15 +73,14 @@ class VaultCubit extends Cubit<VaultState> {
       final newVault = state.vault.deepCopy();
       try {
         if (await fn(state, newVault)) {
-          emit(VaultOpen(state.root, newVault..freeze()));
-          await _saveVault(state.root, newVault);
+          await _repository.saveVault(state.root, newVault);
           return true;
         }
-      } catch (e) {
+      } on VaultSaveException catch (e) {
         emit(VaultOpen(
           state.root,
           state.vault,
-          ephemeralIssue: 'Error: $e',
+          ephemeralIssue: e.message,
         ));
       }
       return false;
@@ -86,25 +93,6 @@ class VaultCubit extends Cubit<VaultState> {
       return await fn(state as VaultOpen);
     }
     return null;
-  }
-
-  Future<void> _saveVault(Directory root, Vault vault) async {
-    // TODO: remove once done with debugging
-    {
-      const encoder = JsonEncoder.withIndent('  ');
-      await File(
-        path.join(root.path, '$vaultFilename.json'),
-      ).writeAsString(
-        encoder.convert(vault.toProto3Json() as Map<String, dynamic>),
-      );
-    }
-    await File(path.join(root.path, vaultFilename))
-        .writeAsBytes(vault.writeToBuffer());
-  }
-
-  VaultFile _buildVaultFile(Directory root, File file) {
-    final relativePath = path.relative(file.path, from: root.path);
-    return VaultFile(path: relativePath.replaceAll(r'\', '/'));
   }
 
   VaultFile? _getVaultFile(String id, VaultOpen state, Vault vault) {
@@ -120,37 +108,40 @@ class VaultCubit extends Cubit<VaultState> {
     return vault.files[index];
   }
 
-  /// Lists all files allowed in a vault, ignoring hidden files and folders.
-  Stream<File> listFiles(Directory dir) async* {
-    await for (final entity in dir.list()) {
-      if (path.basename(entity.path).startsWith('.')) continue;
-      if (entity is Directory) {
-        yield* listFiles(entity);
-      } else if (entity is File) {
-        yield entity;
-      }
-    }
-  }
-
   void updateTag(Set<String> fileIds, int tagTypeId, [TagValue? value]) {
     _updateVault((state, vault) {
       if (!vault.tagTypes.containsKey(tagTypeId)) {
         logger.e('TagTypes missing id: $tagTypeId');
         return false;
       }
-      bool changed = false;
-      for (final fileId in fileIds) {
-        final vaultFile = _getVaultFile(fileId, state, vault);
-        if (vaultFile == null) return false;
-        value ??= vault.tagTypes[tagTypeId]!.defaultValue;
-        if (!vaultFile.hasTags()) vaultFile.tags = MapValue();
-        if (vaultFile.tags.values[tagTypeId] != value) {
-          vaultFile.tags.values[tagTypeId] = value!;
-          changed = true;
-        }
-      }
-      return changed;
+      return _updateTag(
+        fileIds: fileIds,
+        tagTypeId: tagTypeId,
+        state: state,
+        vault: vault,
+      );
     });
+  }
+
+  bool _updateTag({
+    required Set<String> fileIds,
+    required int tagTypeId,
+    required VaultOpen state,
+    required Vault vault,
+    TagValue? value,
+  }) {
+    bool changed = false;
+    for (final fileId in fileIds) {
+      final vaultFile = _getVaultFile(fileId, state, vault);
+      if (vaultFile == null) return false;
+      value ??= vault.tagTypes[tagTypeId]!.defaultValue;
+      if (!vaultFile.hasTags()) vaultFile.tags = MapValue();
+      if (vaultFile.tags.values[tagTypeId] != value) {
+        vaultFile.tags.values[tagTypeId] = value;
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   void removeTag({required Set<String> from, required int tagId}) {
@@ -169,7 +160,7 @@ class VaultCubit extends Cubit<VaultState> {
     });
   }
 
-  Future<bool> createTag({String? name}) async {
+  Future<bool> createTag({String? name, Set<String>? fileIds}) async {
     return await _updateVault((state, vault) {
       if (name != null && state.tagMap.containsKey(name.toLowerCase())) {
         logger.i('Tag [$name] already exists');
@@ -183,6 +174,14 @@ class VaultCubit extends Cubit<VaultState> {
         isFlag: true,
         category: 'tags',
       );
+      if (fileIds != null) {
+        _updateTag(
+          fileIds: fileIds,
+          tagTypeId: tagId,
+          state: state,
+          vault: vault,
+        );
+      }
       return true;
     });
   }

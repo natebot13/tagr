@@ -13,10 +13,24 @@ final class VaultLoadFailure extends VaultState {
 }
 
 class TagTypeValuePair {
-  final Set<String> fileIds;
   final TagType tagType;
+
+  /// The value will be set if all selected files have the same value, otherwise null
   final TagValue? tagValue;
-  TagTypeValuePair(this.fileIds, this.tagType, this.tagValue);
+
+  /// Partial will be true if only some of the selected files have this tagType
+  final bool partial;
+
+  TagTypeValuePair({
+    required this.tagType,
+    this.tagValue,
+    this.partial = false,
+  });
+
+  TagTypeValuePair withPartial() => TagTypeValuePair(
+        tagType: tagType,
+        partial: true,
+      );
 }
 
 final class VaultOpen extends VaultState {
@@ -57,20 +71,31 @@ final class VaultOpen extends VaultState {
       (id) => vault.files[fileMap[id]!].tags.values.entries.map(
         (entry) => MapEntry(
           entry.key,
-          TagTypeValuePair({id}, vault.tagTypes[entry.key]!, entry.value),
+          TagTypeValuePair(
+            tagType: vault.tagTypes[entry.key]!,
+            tagValue: entry.value,
+          ),
         ),
       ),
     );
     if (ids.length == 1) return Map.fromEntries(entries);
 
-    // Join tags from multiple vault files, only keeping common tags
+    // Find the tags that exist in all of the selected files
     final commonTags = entries.duplicates(
       (entry) => entry.key,
       (c) => c == ids.length,
     );
+    // Find the tags that exist on only some of the selected files
+    final uncommonTags = entries.duplicates(
+      (entry) => entry.key,
+      (c) => c < ids.length,
+    );
     final result = <int, TagTypeValuePair>{};
     for (final entry in commonTags) {
       result[entry.key] = _mergeValues(result[entry.key], entry.value);
+    }
+    for (final entry in uncommonTags) {
+      result[entry.key] ??= entry.value.withPartial();
     }
     return result;
   }
@@ -80,16 +105,15 @@ final class VaultOpen extends VaultState {
   /// assertion error is thrown.
   TagTypeValuePair _mergeValues(TagTypeValuePair? a, TagTypeValuePair b) {
     if (a == null) return b;
-    assert(a.tagType == b.tagType);
+    assert(a.tagType == b.tagType, 'Inconsistent tagType and file tag value');
 
     // If the values are the same, return one of the values. If they aren't the
     // same, return null as the value, which indicates that the tag is present,
     // but the values differ, surfacing the opportunity to edit them all at once
     // and make them all the same.
     return TagTypeValuePair(
-      a.fileIds.union(b.fileIds),
-      b.tagType,
-      a.tagValue == b.tagValue ? b.tagValue : null,
+      tagType: b.tagType,
+      tagValue: a.tagValue == b.tagValue ? b.tagValue : null,
     );
   }
 }

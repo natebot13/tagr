@@ -7,8 +7,8 @@ class SelectionCubit extends Cubit<SelectionState> {
   SelectionCubit() : super(SelectionNone());
 
   void select(String id, {bool multi = false}) {
-    if (multi) {
-      _addOrRemoveSelection(id, state.selected);
+    if (multi || state is SelectionMultiple) {
+      _addOrRemoveSelection(id);
     } else {
       if (state.selected.contains(id)) {
         emit(SelectionNone());
@@ -18,25 +18,20 @@ class SelectionCubit extends Cubit<SelectionState> {
     }
   }
 
-  void _addOrRemoveSelection(String id, Set<String> selections) {
-    if (selections.contains(id)) {
-      final diff = selections.difference({id});
+  void unselect() {
+    emit(SelectionNone());
+  }
+
+  void _addOrRemoveSelection(String id) {
+    if (state.selected.contains(id)) {
+      final diff = state.selected.difference({id});
       if (diff.isEmpty) {
         emit(SelectionNone());
       } else {
         emit(SelectionMultiple(diff));
       }
     } else {
-      emit(SelectionMultiple({...selections, id}));
-    }
-  }
-
-  void longSelect(String id) {
-    final state_ = state;
-    if (state_ is SelectionMultiple) {
-      _addOrRemoveSelection(id, state_.selected);
-    } else {
-      emit(SelectionMultiple({id}));
+      emit(SelectionMultiple({...state.selected, id}));
     }
   }
 }
