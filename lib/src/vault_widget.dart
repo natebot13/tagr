@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart';
 import 'package:tagr/src/cubit/search_cubit.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
+import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
@@ -22,8 +24,11 @@ class VaultWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SelectionCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => SelectionCubit()),
+        BlocProvider(create: (context) => SearchCubit()),
+      ],
       child: isDesktop() ? _buildDesktopUi() : _buildMobileUi(),
     );
   }
@@ -56,7 +61,7 @@ class VaultWidget extends StatelessWidget {
               if (selectionState.selected.isNotEmpty)
                 ResizableChild(
                   child: BlocProvider(
-                    create: (context) => SearchCubit(),
+                    create: (context) => TagFilterCubit(),
                     child: CustomScrollView(
                       slivers: [
                         PreviewTagsSliver(
@@ -117,7 +122,7 @@ class VaultWidget extends StatelessWidget {
                       color: Theme.of(context).scaffoldBackgroundColor,
                     ),
                     child: BlocProvider(
-                      create: (context) => SearchCubit(),
+                      create: (context) => TagFilterCubit(),
                       child: MobileTagScrollView(
                         borderRadius: borderRadius,
                         tags: tags,
@@ -209,6 +214,48 @@ class MobileTagScrollView extends StatelessWidget {
   }
 }
 
+class NoImplicitScrollPhysics extends AlwaysScrollableScrollPhysics {
+  const NoImplicitScrollPhysics({super.parent});
+
+  @override
+  bool get allowImplicitScrolling => false;
+
+  @override
+  NoImplicitScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return NoImplicitScrollPhysics(parent: buildParent(ancestor));
+  }
+}
+
+bool filterFunction(String query, VaultFile file, Vault vault) {
+  // https://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double#comment40428033_366532
+  final quoteSplitPattern = RegExp(r'''"([^"]*)"|'([^']*)'|[^\s]+''');
+
+  // https://stackoverflow.com/a/366532/2577975
+  final queryTerms = quoteSplitPattern.allMatches(query).map((match) {
+    if (match.group(1) != null) return match.group(1)!;
+    if (match.group(2) != null) return match.group(2)!;
+    return match.group(0)!;
+  }).toList();
+
+  final negativeTerms = queryTerms
+      .where((term) => term.startsWith('-'))
+      .map((term) => term.replaceFirst('-', ''))
+      .toList();
+
+  final positiveTerms =
+      queryTerms.where((term) => !term.startsWith('-')).toList();
+
+  final tagNames = file.tags.values.keys
+      .map((tagId) => vault.tagTypes[tagId]!.name.toLowerCase())
+      .toList();
+
+  if (tagNames.any((tagName) => negativeTerms.contains(tagName))) {
+    return false;
+  }
+
+  return positiveTerms.every((term) => tagNames.contains(term));
+}
+
 class FileGridWidget extends StatelessWidget {
   const FileGridWidget({
     super.key,
@@ -226,13 +273,17 @@ class FileGridWidget extends StatelessWidget {
     final selectionState = context.watch<SelectionCubit>().state;
     final numSelected = selectionState.selected.length;
     final multiSelect = selectionState is SelectionMultiple;
+    final searchState = context.watch<SearchCubit>().state;
+    final filtered = vault.files
+        .where((file) => filterFunction(searchState.query, file, vault))
+        .toList();
     return Padding(
       padding: const EdgeInsets.all(4),
       child: CustomScrollView(
+        physics: const NoImplicitScrollPhysics(),
         slivers: [
           SliverAppBar(
             floating: true,
-            // TODO: maybe add some actions to the app bar
             pinned: multiSelect,
             leading: multiSelect
                 ? IconButton(
@@ -240,22 +291,33 @@ class FileGridWidget extends StatelessWidget {
                     onPressed: context.read<SelectionCubit>().unselect,
                   )
                 : null,
-            title: Text(
-              multiSelect ? '$numSelected Selected' : basename(root.path),
+            title: Row(
+              children: [
+                if (!multiSelect) Text(basename(root.path)),
+                if (multiSelect) Text('$numSelected Selected'),
+                const Spacer(),
+                Expanded(
+                  child: TextField(
+                    onChanged: context.read<SearchCubit>().search,
+                    decoration: const InputDecoration(hintText: 'Search'),
+                  ),
+                ),
+              ],
             ),
+            // actions: [TextField()],
 
             // pinned: true,
             primary: true,
           ),
           SliverGrid.builder(
-            itemCount: vault.files.length,
+            itemCount: filtered.length,
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 300,
               mainAxisSpacing: 4,
               crossAxisSpacing: 4,
               childAspectRatio: 1,
             ),
-            itemBuilder: (context, i) => FileGridItem(root, vault.files[i]),
+            itemBuilder: (context, i) => FileGridItem(root, filtered[i]),
           ),
           SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
         ],

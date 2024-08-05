@@ -4,13 +4,9 @@ import 'package:meta/meta.dart';
 part 'search_state.dart';
 
 class SearchCubit extends Cubit<SearchState> {
-  SearchCubit() : super(SearchDone());
+  SearchCubit() : super(SearchValue(''));
 
-  void search([String value = '']) {
-    emit(Searching(value));
-  }
-
-  void done() {
-    emit(SearchDone());
+  void search(value) {
+    emit(SearchValue(value));
   }
 }

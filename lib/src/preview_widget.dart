@@ -4,7 +4,7 @@ import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tagr/src/cubit/search_cubit.dart';
+import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
@@ -169,15 +169,15 @@ class _EditPropertiesButtonSliverState
   @override
   Widget build(BuildContext context) {
     final vaultState = context.watch<VaultCubit>().state;
-    final searchState = context.watch<SearchCubit>().state;
+    final searchState = context.watch<TagFilterCubit>().state;
     if (vaultState is! VaultOpen) throw StateError('Wrong state');
-    if (searchState is Searching) {
+    if (searchState is FilteringTags) {
       return SliverAppBar(
         title: _searchField(vaultState, context),
         pinned: true,
         actions: [
           IconButton(
-            onPressed: context.read<SearchCubit>().done,
+            onPressed: context.read<TagFilterCubit>().done,
             icon: const Icon(Icons.close),
           )
         ],
@@ -189,7 +189,7 @@ class _EditPropertiesButtonSliverState
           child: OutlinedButton.icon(
             label: const Text('Add Property'),
             icon: const Icon(Icons.add),
-            onPressed: context.read<SearchCubit>().search,
+            onPressed: context.read<TagFilterCubit>().search,
           ),
         ),
       );
@@ -200,7 +200,7 @@ class _EditPropertiesButtonSliverState
     return TextField(
       decoration: const InputDecoration(hintText: 'Filter tags'),
       controller: controller,
-      onChanged: (value) => context.read<SearchCubit>().search(value),
+      onChanged: (value) => context.read<TagFilterCubit>().search(value),
       onSubmitted: (value) async {
         value = value.trim();
         if (vaultState.tagMap.containsKey(value.toLowerCase())) {
@@ -213,7 +213,7 @@ class _EditPropertiesButtonSliverState
               );
         }
         controller.clear();
-        if (context.mounted) context.read<SearchCubit>().search();
+        if (context.mounted) context.read<TagFilterCubit>().search();
       },
     );
   }
@@ -226,14 +226,14 @@ class TagsSearch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final searchState = context.watch<SearchCubit>().state;
+    final searchState = context.watch<TagFilterCubit>().state;
     final vaultState = context.watch<VaultCubit>().state;
     if (vaultState is! VaultOpen) throw StateError('Wrong state');
     final tags = vaultState.tags(fileIds);
     final filtered = vaultState.vault.tagTypes.entries
         .where((entry) => entry.value.name.contains(searchState.query))
         .sorted((a, b) => a.value.name.compareTo(b.value.name));
-    if (searchState is SearchDone) {
+    if (searchState is TagFilterDone) {
       return const SliverPadding(padding: EdgeInsets.zero);
     }
     return SliverList.builder(
