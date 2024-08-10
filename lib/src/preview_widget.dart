@@ -175,6 +175,7 @@ class _EditPropertiesButtonSliverState
       return SliverAppBar(
         title: _searchField(vaultState, context),
         pinned: true,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             onPressed: context.read<TagFilterCubit>().done,

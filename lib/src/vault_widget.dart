@@ -285,6 +285,7 @@ class FileGridWidget extends StatelessWidget {
           SliverAppBar(
             floating: true,
             pinned: multiSelect,
+            automaticallyImplyLeading: true,
             leading: multiSelect
                 ? IconButton(
                     icon: const Icon(Icons.close),
