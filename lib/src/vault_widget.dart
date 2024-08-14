@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dismissible_page/dismissible_page.dart';
+import 'package:eval_ex/expression.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -226,34 +227,49 @@ class NoImplicitScrollPhysics extends AlwaysScrollableScrollPhysics {
   }
 }
 
-bool filterFunction(String query, VaultFile file, Vault vault) {
-  // https://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double#comment40428033_366532
-  final quoteSplitPattern = RegExp(r'''"([^"]*)"|'([^']*)'|[^\s]+''');
+extension on SearchTerm {
+  /// To be used from an "every" context
+  bool matches(List<TagTypeValuePair> typeValuePairs) {
+    final matchedPair = typeValuePairs.firstWhereOrNull(
+      (typeValuePair) => typeValuePair.tagType.name.toLowerCase() == term,
+    );
+    if (matchedPair == null && isPositive) return false;
+    if (matchedPair != null && isNegative) return false;
+    if (isNegative) return true;
 
-  // https://stackoverflow.com/a/366532/2577975
-  final queryTerms = quoteSplitPattern.allMatches(query).map((match) {
-    if (match.group(1) != null) return match.group(1)!;
-    if (match.group(2) != null) return match.group(2)!;
-    return match.group(0)!;
-  }).toList();
+    // Being here means we have a nameMatch and we're positive
 
-  final negativeTerms = queryTerms
-      .where((term) => term.startsWith('-'))
-      .map((term) => term.replaceFirst('-', ''))
-      .toList();
+    // Flags are always matches
+    if (matchedPair!.tagType.isFlag) return true;
 
-  final positiveTerms =
-      queryTerms.where((term) => !term.startsWith('-')).toList();
+    // If the param is null or empty, it's a match
+    if (param == null || param!.isEmpty) return true;
 
-  final tagNames = file.tags.values.keys
-      .map((tagId) => vault.tagTypes[tagId]!.name.toLowerCase())
-      .toList();
+    // Check the param
+    var tagValue = matchedPair.tagValue!;
+    if (tagValue.whichValue() == TagValue_Value.notSet) {
+      tagValue = matchedPair.tagType.defaultValue;
+    }
+    final valueString = tagValue.asStringValue();
+    final exp = Expression('$valueString$param');
 
-  if (tagNames.any((tagName) => negativeTerms.contains(tagName))) {
-    return false;
+    try {
+      return exp.eval().toString() == '1';
+    } on ExpressionException catch (e) {
+      return false;
+    }
   }
+}
 
-  return positiveTerms.every((term) => tagNames.contains(term));
+bool filterFunction(List<SearchTerm> searchTerms, VaultFile file, Vault vault) {
+  final nameValues = file.tags.values.entries
+      .map(
+        (entry) => TagTypeValuePair(
+            tagType: vault.tagTypes[entry.key]!, tagValue: entry.value),
+      )
+      .toList();
+
+  return searchTerms.every((searchTerm) => searchTerm.matches(nameValues));
 }
 
 class FileGridWidget extends StatelessWidget {
@@ -275,7 +291,7 @@ class FileGridWidget extends StatelessWidget {
     final multiSelect = selectionState is SelectionMultiple;
     final searchState = context.watch<SearchCubit>().state;
     final filtered = vault.files
-        .where((file) => filterFunction(searchState.query, file, vault))
+        .where((file) => filterFunction(searchState.searchTerms, file, vault))
         .toList();
     return Padding(
       padding: const EdgeInsets.all(4),

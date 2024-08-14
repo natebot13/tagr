@@ -144,10 +144,18 @@ class PreviewTagsSliver extends StatelessWidget {
                 )
                 .toList(),
           ),
-        ...valueTags.map((entry) => TagValueEditor(
-              entry.value,
-              key: ValueKey('TagValueEditor${entry.key}'),
-            )),
+        ...valueTags.map(
+          (entry) => TagValueEditor(
+            entry.value,
+            key: ValueKey(
+              Object.hashAll([
+                entry.value.tagType,
+                entry.value.partial,
+                entry.value.tagValue?.whichValue(),
+              ]),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -165,6 +173,12 @@ class EditPropertiesButtonSliver extends StatefulWidget {
 class _EditPropertiesButtonSliverState
     extends State<EditPropertiesButtonSliver> {
   final controller = TextEditingController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +265,7 @@ class TagsSearch extends StatelessWidget {
     BuildContext context,
   ) {
     bool? value = tags.containsKey(entry.key);
-    if (value && tags[entry.key]!.tagValue == null) {
+    if (value && tags[entry.key]!.partial) {
       value = null;
     }
 
@@ -287,87 +301,161 @@ class TagValueEditor extends StatefulWidget {
 }
 
 class _TagValueEditorState extends State<TagValueEditor> {
-  final intTextController = TextEditingController();
+  final controller = TextEditingController();
+  String? errorText;
   TagTypeValuePair get typeValuePair => widget.typeValuePair;
 
   @override
   void initState() {
-    switch (typeValuePair.tagType.defaultValue.whichValue()) {
-      case TagValue_Value.stringValue:
-        break;
-      case TagValue_Value.intValue:
-        intTextController.text =
-            typeValuePair.tagValue?.intValue.toString() ?? '';
-        break;
-      case TagValue_Value.floatValue:
-        break;
-      case TagValue_Value.listValue:
-        break;
-      case TagValue_Value.mapValue:
-        break;
-      case TagValue_Value.boolValue:
-      case TagValue_Value.notSet:
-        break;
+    print("initState for TagValueEditor");
+    if (typeValuePair.partial) {
+      setControllerText(TagValue());
+    } else {
+      if (typeValuePair.tagValue?.whichValue() == TagValue_Value.notSet) {
+        setControllerText(typeValuePair.tagType.defaultValue);
+      } else {
+        setControllerText(typeValuePair.tagValue);
+      }
     }
     super.initState();
   }
 
+  void setControllerText(TagValue? value) {
+    controller.text = switch (value?.whichValue()) {
+      null => '',
+      TagValue_Value.stringValue => value!.stringValue,
+      TagValue_Value.intValue => value!.intValue.toString(),
+      TagValue_Value.floatValue => value!.floatValue.toString(),
+      TagValue_Value.notSet => '',
+      _ => 'not implemented',
+    };
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  bool validateText() {
+    final text = controller.text;
+    setState(() {
+      errorText = switch (typeValuePair.tagType.defaultValue.whichValue()) {
+        TagValue_Value.boolValue => null,
+        TagValue_Value.stringValue => null,
+        TagValue_Value.intValue =>
+          int.tryParse(text) == null ? 'Invalid int' : null,
+        TagValue_Value.floatValue =>
+          double.tryParse(text) == null ? 'Invalid float' : null,
+        TagValue_Value.listValue => null,
+        TagValue_Value.mapValue => null,
+        TagValue_Value.notSet => null,
+      };
+    });
+    return errorText == null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final selectionState = context.watch<SelectionCubit>().state;
     return Row(
       children: [
         Text('${typeValuePair.tagType.name}:'),
-        const SizedBox(width: 16),
-        Expanded(child: _buildEditor(context)),
+        const SizedBox(width: 8),
+        _buildEditor(context, selectionState.selected),
+        if (typeValuePair.tagValue?.whichValue() != TagValue_Value.notSet)
+          IconButton(
+              onPressed: () async {
+                await context.read<VaultCubit>().updateTag(
+                      selectionState.selected,
+                      typeValuePair.tagType.id,
+                      TagValue(),
+                    );
+                setControllerText(typeValuePair.tagType.defaultValue);
+              },
+              icon: const Icon(Icons.refresh))
       ],
     );
   }
 
-  Widget _buildEditor(BuildContext context) {
-    final selectionState = context.watch<SelectionCubit>().state;
+  Widget _buildEditor(BuildContext context, Set<String> selected) {
+    final style = typeValuePair.tagValue?.whichValue() == TagValue_Value.notSet
+        ? null
+        : const TextStyle(fontWeight: FontWeight.bold);
+    final decoration = InputDecoration(
+      contentPadding: const EdgeInsets.all(8),
+      border: InputBorder.none,
+      // hoverColor: Colors.grey[300],
+      fillColor: Colors.transparent,
+      filled: true,
+      errorText: errorText,
+    );
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: switch (typeValuePair.tagType.defaultValue.whichValue()) {
-        TagValue_Value.boolValue => Checkbox(
-            value: typeValuePair.tagValue?.boolValue,
-            onChanged: (value) => context.read<VaultCubit>().updateTag(
-                  selectionState.selected,
-                  typeValuePair.tagType.id,
-                  TagValue(boolValue: value),
-                ),
-            tristate: typeValuePair.tagValue?.boolValue == null,
+    void updater(TagValue value) {
+      context.read<VaultCubit>().updateTag(
+            selected,
+            typeValuePair.tagType.id,
+            value,
+          );
+    }
+
+    return switch (typeValuePair.tagType.defaultValue.whichValue()) {
+      TagValue_Value.boolValue => Checkbox(
+          value: typeValuePair.tagValue?.boolValue,
+          onChanged: (value) => updater(TagValue(boolValue: value)),
+          tristate: typeValuePair.tagValue?.boolValue == null,
+        ),
+      TagValue_Value.stringValue => Expanded(
+          child: TextField(
+            controller: controller,
+            style: style,
+            onChanged: (value) => updater(TagValue(stringValue: value)),
+            decoration: decoration,
           ),
-        TagValue_Value.stringValue => const TextField(),
-        TagValue_Value.intValue => TextField(
-            keyboardType: const TextInputType.numberWithOptions(signed: true),
-            controller: intTextController,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              contentPadding: EdgeInsets.all(8),
-              border: InputBorder.none,
-              // hoverColor: Colors.grey[300],
-              fillColor: Colors.transparent,
-              filled: true,
-            ),
-            onSubmitted: (value) => context.read<VaultCubit>().updateTag(
-                  selectionState.selected,
-                  typeValuePair.tagType.id,
-                  TagValue(intValue: int.parse(value)),
-                ),
-          ),
-        TagValue_Value.floatValue => TextField(
+        ),
+      TagValue_Value.intValue => Expanded(
+          child: TextField(
+            controller: controller,
             keyboardType: const TextInputType.numberWithOptions(
-                signed: true, decimal: true),
+              signed: true,
+              decimal: false,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp('[0-9-]')),
+            ],
+            style: style,
+            decoration: decoration,
+            onChanged: (value) {
+              if (validateText()) {
+                updater(TagValue(intValue: int.parse(value)));
+              }
+            },
+          ),
+        ),
+      TagValue_Value.floatValue => Expanded(
+          child: TextField(
+            controller: controller,
+            decoration: decoration,
+            style: style,
+            keyboardType: const TextInputType.numberWithOptions(
+              signed: true,
+              decimal: true,
+            ),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9\.]')),
             ],
+            onChanged: (value) {
+              if (validateText()) {
+                updater(TagValue(floatValue: double.parse(value)));
+              }
+            },
           ),
-        TagValue_Value.listValue => throw UnimplementedError(),
-        TagValue_Value.mapValue =>
-          Text(typeValuePair.tagValue?.mapValue.toString() ?? '{}'),
-        _ => throw UnimplementedError(),
-      },
-    );
+        ),
+      TagValue_Value.listValue =>
+        Text(typeValuePair.tagValue?.listValue.toString() ?? '[]'),
+      TagValue_Value.mapValue =>
+        Text(typeValuePair.tagValue?.mapValue.toString() ?? '{}'),
+      TagValue_Value.notSet => throw UnimplementedError(),
+    };
   }
 }

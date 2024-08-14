@@ -69,13 +69,20 @@ final class VaultOpen extends VaultState {
   Map<int, TagTypeValuePair> tags(Set<String> ids) {
     final entries = ids.expand(
       (id) => vault.files[fileMap[id]!].tags.values.entries.map(
-        (entry) => MapEntry(
-          entry.key,
-          TagTypeValuePair(
-            tagType: vault.tagTypes[entry.key]!,
-            tagValue: entry.value,
-          ),
-        ),
+        (entry) {
+          final tagType = vault.tagTypes[entry.key]!;
+
+          // If the tag value type doesn't match the default value type, make
+          // the tag's value unset.
+          var tagValue = entry.value;
+          if (tagValue.whichValue() != tagType.defaultValue.whichValue()) {
+            tagValue = TagValue();
+          }
+          return MapEntry(
+            entry.key,
+            TagTypeValuePair(tagType: tagType, tagValue: tagValue),
+          );
+        },
       ),
     );
     if (ids.length == 1) return Map.fromEntries(entries);
@@ -95,7 +102,8 @@ final class VaultOpen extends VaultState {
       result[entry.key] = _mergeValues(result[entry.key], entry.value);
     }
     for (final entry in uncommonTags) {
-      result[entry.key] ??= entry.value.withPartial();
+      result[entry.key] ??=
+          _mergeValues(result[entry.key], entry.value.withPartial());
     }
     return result;
   }
@@ -114,6 +122,7 @@ final class VaultOpen extends VaultState {
     return TagTypeValuePair(
       tagType: b.tagType,
       tagValue: a.tagValue == b.tagValue ? b.tagValue : null,
+      partial: a.partial || b.partial,
     );
   }
 }

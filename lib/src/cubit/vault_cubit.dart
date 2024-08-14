@@ -108,8 +108,12 @@ class VaultCubit extends Cubit<VaultState> {
     return vault.files[index];
   }
 
-  void updateTag(Set<String> fileIds, int tagTypeId, [TagValue? value]) {
-    _updateVault((state, vault) {
+  Future<void> updateTag(
+    Set<String> fileIds,
+    int tagTypeId, [
+    TagValue? value,
+  ]) {
+    return _updateVault((state, vault) {
       if (!vault.tagTypes.containsKey(tagTypeId)) {
         logger.e('TagTypes missing id: $tagTypeId');
         return false;
@@ -119,6 +123,7 @@ class VaultCubit extends Cubit<VaultState> {
         tagTypeId: tagTypeId,
         state: state,
         vault: vault,
+        value: value,
       );
     });
   }
@@ -132,12 +137,21 @@ class VaultCubit extends Cubit<VaultState> {
   }) {
     bool changed = false;
     for (final fileId in fileIds) {
+      var eachValue = value;
       final vaultFile = _getVaultFile(fileId, state, vault);
       if (vaultFile == null) return false;
-      value ??= vault.tagTypes[tagTypeId]!.defaultValue;
       if (!vaultFile.hasTags()) vaultFile.tags = MapValue();
-      if (vaultFile.tags.values[tagTypeId] != value) {
-        vaultFile.tags.values[tagTypeId] = value;
+      final tagTypeDefaultValue = vault.tagTypes[tagTypeId]?.defaultValue;
+      final tagValue = vaultFile.tags.values[tagTypeId];
+      if (eachValue == null) {
+        if (tagTypeDefaultValue?.whichValue() == tagValue?.whichValue()) {
+          eachValue = tagValue ?? TagValue();
+        } else {
+          eachValue = TagValue();
+        }
+      }
+      if (vaultFile.tags.values[tagTypeId] != eachValue) {
+        vaultFile.tags.values[tagTypeId] = eachValue;
         changed = true;
       }
     }
@@ -186,8 +200,12 @@ class VaultCubit extends Cubit<VaultState> {
     });
   }
 
-  /// Pass a new instance of a TagType to merge with the current tag type. Don't
-  /// reuse the passed update object as it gets updated in place.
+  /// The vault's tag type, located using [tagId], is merged with [update].
+  ///
+  /// Important note: We don't update all the vault files if a tag type changes.
+  /// This means that files could have the wrong tag value type. When reading
+  /// the tags of a file, check the tag type for the correct type and reassign
+  /// the tag's value when convenient.
   void updateTagType(int tagId, TagType update) {
     _updateVault((state, vault) {
       final tagType = vault.tagTypes[tagId];

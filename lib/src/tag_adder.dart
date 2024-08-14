@@ -81,6 +81,13 @@ class _TagTypeListItemState extends State<TagTypeListItem> {
   }
 
   @override
+  void dispose() {
+    nameController.dispose();
+    categoryController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Row(

@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:tagr/src/generated/tagr.pb.dart';
+
 extension CustomUpdation on Map<dynamic, int> {
   int increment(dynamic key) {
     return update(key, (value) => ++value, ifAbsent: () => 1);
@@ -25,4 +27,20 @@ isDesktop() {
 
 isMobile() {
   return Platform.isAndroid || Platform.isIOS;
+}
+
+extension StringValue on TagValue {
+  String asStringValue() {
+    return switch (whichValue()) {
+      TagValue_Value.boolValue => boolValue.toString(),
+      TagValue_Value.stringValue => '"$stringValue"',
+      TagValue_Value.intValue => intValue.toString(),
+      TagValue_Value.floatValue => floatValue.toString(),
+
+      // TODO: Do something cool with dot notation
+      TagValue_Value.listValue => throw UnimplementedError(),
+      TagValue_Value.mapValue => throw UnimplementedError(),
+      TagValue_Value.notSet => throw UnimplementedError(),
+    };
+  }
 }
