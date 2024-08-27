@@ -50,35 +50,44 @@ class VaultWidget extends StatelessWidget {
           final selectionState = context.watch<SelectionCubit>().state;
 
           final tags = vaultState.tags(selectionState.selected);
+          final firstId = selectionState.selected.firstOrNull;
           return ResizableContainer(
             direction: Axis.vertical,
             children: [
               ResizableChild(
                 child: PreviewImage(
-                  id: selectionState.selected.firstOrNull,
-                  vaultState: vaultState,
+                  id: firstId,
+                  provider: vaultState.imageProvider(firstId),
                 ),
               ),
               if (selectionState.selected.isNotEmpty)
                 ResizableChild(
-                  child: BlocProvider(
-                    create: (context) => TagFilterCubit(),
-                    child: CustomScrollView(
-                      slivers: [
-                        PreviewTagsSliver(
-                          tags,
-                          selectionState.selected,
-                          key: ValueKey(selectionState.selected.first),
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.all(0),
-                          sliver: EditPropertiesButtonSliver(
-                            selectionState.selected,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SelectableText(selectionState.selected.join('\n')),
+                      Expanded(
+                        child: BlocProvider(
+                          create: (context) => TagFilterCubit(),
+                          child: CustomScrollView(
+                            slivers: [
+                              PreviewTagsSliver(
+                                tags,
+                                selectionState.selected,
+                                key: ValueKey(selectionState.selected.first),
+                              ),
+                              SliverPadding(
+                                padding: const EdgeInsets.all(0),
+                                sliver: EditPropertiesButtonSliver(
+                                  selectionState.selected,
+                                ),
+                              ),
+                              TagsSearch(selectionState.selected),
+                            ],
                           ),
                         ),
-                        TagsSearch(selectionState.selected),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 )
             ],
@@ -403,14 +412,10 @@ class FileGridItem extends StatelessWidget {
                 decoration: BoxDecoration(
                     borderRadius:
                         BorderRadius.all(Radius.circular(selected ? 16 : 0))),
-                child: Hero(
-                  tag: id,
-                  child: FadeInImage(
-                    placeholder: MemoryImage(kTransparentImage),
-                    fadeInDuration: const Duration(milliseconds: 300),
-                    image: provider,
-                    fit: BoxFit.cover,
-                  ),
+                child: PreviewImage(
+                  id: id,
+                  provider: provider,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),

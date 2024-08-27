@@ -8,6 +8,7 @@ import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class PreviewPage extends StatelessWidget {
   final String file;
@@ -30,8 +31,18 @@ class PreviewPage extends StatelessWidget {
           SliverSafeArea(
             sliver: SliverToBoxAdapter(
               child: DismissiblePage(
-                  onDismissed: Navigator.of(context).pop,
-                  child: PreviewImage(id: file, vaultState: vaultState)),
+                onDismissed: Navigator.of(context).pop,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: (MediaQuery.of(context).size.height * .8) -
+                        MediaQuery.of(context).viewInsets.bottom,
+                  ),
+                  child: PreviewImage(
+                    id: file,
+                    provider: vaultState.imageProvider(file),
+                  ),
+                ),
+              ),
             ),
           ),
           PreviewTagsSliver(vaultState.tags({file}), {file}),
@@ -45,23 +56,24 @@ class PreviewPage extends StatelessWidget {
 
 class PreviewImage extends StatelessWidget {
   final String? id;
-  final VaultOpen vaultState;
+  final ImageProvider provider;
+  final BoxFit fit;
   const PreviewImage({
     this.id,
-    required this.vaultState,
+    required this.provider,
     super.key,
+    this.fit = BoxFit.contain,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: (MediaQuery.of(context).size.height * .8) -
-            MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Hero(
-        tag: id ?? 'none',
-        child: Image(image: vaultState.imageProvider(id)),
+    return Hero(
+      tag: id ?? 'none',
+      child: FadeInImage(
+        placeholder: MemoryImage(kTransparentImage),
+        fadeInDuration: const Duration(milliseconds: 200),
+        image: provider,
+        fit: fit,
       ),
     );
   }
