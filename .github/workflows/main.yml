@@ -30,7 +30,7 @@ jobs:
           filename: tagr-${{github.ref_name}}-windows.zip
           directory: build/windows/x64/runner/Release
       - name: Release Windows
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
           artifacts: "build/windows/x64/runner/Release/tagr-${{github.ref_name}}-windows.zip"
           tag: ${{github.ref_name}}-build-${{github.run_number}}
