@@ -11,6 +11,8 @@ jobs:
   build-and-release-windows:
     name: Build & Release for Windows
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v1
@@ -34,4 +36,3 @@ jobs:
         with:
           artifacts: "build/windows/x64/runner/Release/tagr-${{github.ref_name}}-windows.zip"
           tag: ${{github.ref_name}}-build-${{github.run_number}}
-          token: ${{ secrets.TOKEN }}
