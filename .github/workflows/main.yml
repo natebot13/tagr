@@ -1,3 +1,5 @@
+name: Build & Release
+
 on:
   pull_request:
     branches:
@@ -6,15 +8,42 @@ on:
     branches:
       - main
 
-name: Build & Release
-jobs: 
-  build-and-release-windows:
-    name: Build & Release for Windows & Android
-    runs-on: windows-latest
-    permissions:
-      contents: write
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+  
+  build_release:
+    name: Build Release
+    needs: create_release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            release_suffix: ubuntu
+          - os: macos-latest
+            release_suffix: mac
+          - os: windows-latest
+            release_suffix: windows
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+
+      
+      # Set up the machines
+
+      - uses: actions/setup-java@v1
+        if: matrix.os == 'ubuntu-latest'
 
       - uses: subosito/flutter-action@v1
         with:
@@ -25,51 +54,51 @@ jobs:
 
       - name: Build intermediates
         run: dart run build_runner build --delete-conflicting-outputs
+      
+
+      # Build Apps
 
       - name: Build Windows
+        if: matrix.os == 'windows-latest'
         run: flutter build windows --release
+      
+      - name: Build Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: flutter build linux --release
+      
+      - name: Build Android
+        if: matrix.os == 'ubuntu-latest'
+        run: flutter build apk --release --split-per-abi
+      
+      - name: Build MacOS
+        if: matrix.os == 'macos-latest'
+        run: flutter build macos --release
+      
+      - name: Build iOS
+        if: matrix.os == 'macos-latest'
+        run: flutter build ipa --release
+
+      
+      # Collect Artifacts
 
       - name: Create Windows Archive
+        if: matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
         uses: thedoctor0/zip-release@master
         with:
           type: zip
-          filename: tagr-${{github.ref_name}}-windows.zip
-          directory: build/windows/x64/runner/Release
+          filename: tagr-windows-${{github.ref_name}}.zip
+          directory: "build/windows/x64/runner/Release"
 
       - name: Release Windows
-        uses: ncipollo/release-action@v1
+        if: matrix.os == 'windows-latest'
+        uses: softprops/action-gh-release@v1
         with:
-          artifacts: "build/windows/x64/runner/Release/tagr-${{github.ref_name}}-windows.zip"
-          tag: ${{github.ref_name}}-build-${{github.run_number}}
-  
-  build-and-release-android:
-    name: Build & Release for Android
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v3
-
-      # Setup Java environment in order to build the Android app.
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '12.x'
+          tag-name: ${{ needs.create_release.outputs.tag-name }}
+          files: build/windows/x64/runner/Release/tagger-windows-${{github.ref_name}}.zip
       
-      - uses: subosito/flutter-action@v1
-        with:
-          channel: stable
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build intermediates
-        run: dart run build_runner build --delete-conflicting-outputs
-
-      - name: Build Anroid
-        run: flutter build apk --release --split-per-abi
-
       - name: Release Android
-        uses: ncipollo/release-action@v1
+        if: matrix.os == 'ubuntu-latest'
+        uses: softprops/action-gh-release@v1
         with:
-          artifacts: "build/app/outputs/apk/release/*"
-          tag: ${{github.ref_name}}-build-${{github.run_number}}
+          tag-name: ${{ needs.create_release.outputs.tag-name }}
+          files: build/app/outputs/apk/release/*
