@@ -9,30 +9,67 @@ on:
 name: Build & Release
 jobs: 
   build-and-release-windows:
-    name: Build & Release for Windows
+    name: Build & Release for Windows & Android
     runs-on: windows-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v3
+
       - uses: subosito/flutter-action@v1
         with:
           channel: stable
-          flutter-version: '3.22.2'
+
       - name: Install Dependencies
         run: flutter pub get
+
       - name: Build intermediates
         run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Build Windows
         run: flutter build windows --release
-      - name: Create Build Archive
+
+      - name: Create Windows Archive
         uses: thedoctor0/zip-release@master
         with:
           type: zip
           filename: tagr-${{github.ref_name}}-windows.zip
           directory: build/windows/x64/runner/Release
+
       - name: Release Windows
         uses: ncipollo/release-action@v1
         with:
           artifacts: "build/windows/x64/runner/Release/tagr-${{github.ref_name}}-windows.zip"
+          tag: ${{github.ref_name}}-build-${{github.run_number}}
+  
+  build-and-release-android:
+    name: Build & Release for Android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      # Setup Java environment in order to build the Android app.
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
+      
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: stable
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build intermediates
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Anroid
+        run: flutter build apk --release --split-per-abi
+
+      - name: Release Android
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/app/outputs/apk/release/*"
           tag: ${{github.ref_name}}-build-${{github.run_number}}
