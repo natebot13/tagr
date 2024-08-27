@@ -16,28 +16,29 @@ class PreviewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vaultState = context.watch<VaultCubit>().state;
+    final selectionState = context.watch<SelectionCubit>().state;
     if (vaultState is! VaultOpen) {
       throw StateError('PreviewPage requires VaultOpen state');
     }
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: CustomScrollView(slivers: [
-        SliverSafeArea(
-          sliver: SliverToBoxAdapter(
-            child: DismissiblePage(
-                onDismissed: Navigator.of(context).pop,
-                child: PreviewImage(id: file, vaultState: vaultState)),
+    return BlocProvider(
+      create: (context) => TagFilterCubit(),
+      child: Container(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: CustomScrollView(slivers: [
+          SliverSafeArea(
+            sliver: SliverToBoxAdapter(
+              child: DismissiblePage(
+                  onDismissed: Navigator.of(context).pop,
+                  child: PreviewImage(id: file, vaultState: vaultState)),
+            ),
           ),
-        ),
-        SliverToBoxAdapter(
-            child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: EditPropertiesButtonSliver({file}),
-        )),
-        PreviewTagsSliver(vaultState.tags({file}), {file}),
-      ]),
+          PreviewTagsSliver(vaultState.tags({file}), {file}),
+          EditPropertiesButtonSliver({file}),
+          TagsSearch(selectionState.selected),
+        ]),
+      ),
     );
   }
 }

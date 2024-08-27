@@ -377,6 +377,7 @@ class FileGridItem extends StatelessWidget {
                   child: MultiBlocProvider(
                     providers: [
                       BlocProvider.value(value: context.read<VaultCubit>()),
+                      BlocProvider.value(value: context.read<SelectionCubit>()),
                     ],
                     child: PreviewPage(file: id),
                   ),
