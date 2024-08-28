@@ -110,7 +110,7 @@ jobs:
         with:
           type: zip
           filename: tagr-linux-${{github.ref_name}}.zip
-          path: "./build/linux/x64/release/bundle/tagr"
+          path: "./build/linux/x64/release/bundle"
 
       - name: Create MacOS Zip
         if: matrix.platform == 'mac'
