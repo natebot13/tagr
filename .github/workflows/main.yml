@@ -33,11 +33,15 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
-            release_suffix: ubuntu
+            platform: linux
+          - os: ubuntu-latest
+            platform: android
           - os: macos-latest
-            release_suffix: mac
+            platform: mac
+          - os: macos-latest
+            platform: ios
           - os: windows-latest
-            release_suffix: windows
+            platform: windows
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -47,8 +51,12 @@ jobs:
       
       # Set up the machines
 
+      - name: Install Ninja (linux)
+        if: matrix.platform == 'linux'
+        run: sudo apt-get install ninja-build
+
       - uses: actions/setup-java@v1
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.platform == 'android'
         with:
           java-version: 12.x
 
@@ -66,32 +74,32 @@ jobs:
       # Build Apps
 
       - name: Build Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform == 'windows'
         run: flutter build windows --release
       
       - name: Build Linux
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.platform == 'linux'
         run: flutter build linux --release
       
       - name: Build Android
+        id: build_android
         # Run this step no matter what the result of the previous step was
-        if: matrix.os == 'ubuntu-latest' && (success() || failure())
+        if: matrix.platform == 'android'
         run: flutter build apk --release --split-per-abi
       
       - name: Build MacOS
-        if: matrix.os == 'macos-latest'
+        if: matrix.platform == 'mac'
         run: flutter build macos --release
       
       - name: Build iOS
-        # Run this step no matter what the result of the previous step was
-        if: matrix.os == 'macos-latest' && (success() || failure())
+        if: matrix.platform == 'ios'
         run: flutter build ipa --release
 
       
       # Collect Artifacts
 
-      - name: Create Windows Archive
-        if: matrix.os == 'windows-latest' || matrix.os == 'macos-latest'
+      - name: Create Windows Zip
+        if: matrix.platform == 'windows'
         uses: thedoctor0/zip-release@master
         with:
           type: zip
@@ -99,17 +107,33 @@ jobs:
           directory: "build/windows/x64/runner/Release"
         
       - name: Release Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform == 'windows'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
           artifacts: build/windows/x64/runner/Release/tagr-windows-${{github.ref_name}}.zip
       
+      - name: Release MacOS
+        if: matrix.platform == 'mac'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          allowUpdates: true
+          artifacts: build/macos/Build/Products/Release/tagr.app
+      
       - name: Release Android
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.platform == 'android'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
           artifacts: build/app/outputs/apk/release/*
+      
+      - name: Release iOS
+        if: matrix.platform == 'ios'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          allowUpdates: true
+          artifacts: build/app/outputs/ipa/release/*
