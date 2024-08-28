@@ -19,7 +19,7 @@ jobs:
         id: create_release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}
           allowUpdates: true
   
   build_release:
@@ -98,7 +98,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}
           allowUpdates: true
           artifacts: build/windows/x64/runner/Release/tagger-windows-${{github.ref_name}}.zip
       
@@ -106,6 +106,6 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}
           allowUpdates: true
           artifacts: build/app/outputs/apk/release/*
