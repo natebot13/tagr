@@ -101,27 +101,24 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           type: zip
-          custom: -j
           filename: tagr-windows-${{github.ref_name}}.zip
-          path: "build/windows/x64/runner/Release"
+          path: "./build/windows/x64/runner/Release"
       
       - name: Create Linux Zip
         if: matrix.platform == 'linux'
         uses: thedoctor0/zip-release@master
         with:
           type: zip
-          custom: -j
           filename: tagr-linux-${{github.ref_name}}.zip
-          path: "build/linux/x64/release/bundle/tagr"
+          path: "./build/linux/x64/release/bundle/tagr"
 
       - name: Create MacOS Zip
         if: matrix.platform == 'mac'
         uses: thedoctor0/zip-release@master
         with:
           type: zip
-          custom: -j
           filename: tagr-macos-${{github.ref_name}}.app.zip
-          path: "build/macos/Build/Products/Release/tagr.app"
+          path: "./build/macos/Build/Products/Release/tagr.app"
       
       
       # Release builds
