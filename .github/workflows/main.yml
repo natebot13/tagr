@@ -104,7 +104,15 @@ jobs:
         with:
           type: zip
           filename: tagr-windows-${{github.ref_name}}.zip
-          directory: "build/windows/x64/runner/Release"
+          path: "build/windows/x64/runner/Release"
+      
+      - name: Create Linux Zip
+        if: matrix.platform == 'windows'
+        uses: thedoctor0/zip-release@master
+        with:
+          type: zip
+          filename: tagr-linux-${{github.ref_name}}.zip
+          path: "build/linux/x64/release/bundle/tagr"
 
       - name: Create MacOS Zip
         if: matrix.platform == 'mac'
@@ -112,7 +120,7 @@ jobs:
         with:
           type: zip
           filename: tagr-macos-${{github.ref_name}}.app.zip
-          directory: "build/macos/Build/Products/Release/tagr.app"
+          path: "build/macos/Build/Products/Release/tagr.app"
         
       - name: Release Windows
         if: matrix.platform == 'windows'
@@ -120,7 +128,15 @@ jobs:
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: build/windows/x64/runner/Release/tagr-windows-${{github.ref_name}}.zip
+          artifacts: tagr-windows-${{github.ref_name}}.zip
+      
+      - name: Release Linux
+        if: matrix.platform == 'linux'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          allowUpdates: true
+          artifacts: tagr-linux-${{github.ref_name}}.zip
       
       - name: Release MacOS
         if: matrix.platform == 'mac'
@@ -128,7 +144,7 @@ jobs:
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: build/macos/Build/Products/Release/tagr.app/tagr-macos-${{github.ref_name}}.app.zip
+          artifacts: tagr-macos-${{github.ref_name}}.app.zip
       
       - name: Release Android
         if: matrix.platform == 'android'
