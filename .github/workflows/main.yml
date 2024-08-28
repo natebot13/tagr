@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '*'
 
 jobs:
   create_release:
@@ -15,12 +17,10 @@ jobs:
     steps:
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
           name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          generate_release_notes: false
+          allowUpdates: true
   
   build_release:
     name: Build Release
@@ -44,6 +44,8 @@ jobs:
 
       - uses: actions/setup-java@v1
         if: matrix.os == 'ubuntu-latest'
+        with:
+          java-version: 12.x
 
       - uses: subosito/flutter-action@v1
         with:
@@ -88,17 +90,22 @@ jobs:
           type: zip
           filename: tagr-windows-${{github.ref_name}}.zip
           directory: "build/windows/x64/runner/Release"
-
+      
+      
+        
+        
       - name: Release Windows
         if: matrix.os == 'windows-latest'
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          tag-name: ${{ needs.create_release.outputs.tag-name }}
-          files: build/windows/x64/runner/Release/tagger-windows-${{github.ref_name}}.zip
+          name: ${{ github.ref_name }}
+          allowUpdates: true
+          artifacts: build/windows/x64/runner/Release/tagger-windows-${{github.ref_name}}.zip
       
       - name: Release Android
         if: matrix.os == 'ubuntu-latest'
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          tag-name: ${{ needs.create_release.outputs.tag-name }}
-          files: build/app/outputs/apk/release/*
+          name: ${{ github.ref_name }}
+          allowUpdates: true
+          artifacts: build/app/outputs/apk/release/*
