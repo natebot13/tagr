@@ -101,6 +101,7 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           type: zip
+          custom: -j
           filename: tagr-windows-${{github.ref_name}}.zip
           path: "build/windows/x64/runner/Release"
       
@@ -109,6 +110,7 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           type: zip
+          custom: -j
           filename: tagr-linux-${{github.ref_name}}.zip
           path: "build/linux/x64/release/bundle/tagr"
 
@@ -117,6 +119,7 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           type: zip
+          custom: -j
           filename: tagr-macos-${{github.ref_name}}.app.zip
           path: "build/macos/Build/Products/Release/tagr.app"
       
