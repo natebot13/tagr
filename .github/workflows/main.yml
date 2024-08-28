@@ -30,18 +30,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [windows, linux, mac, android, ios]
         include:
-          - os: ubuntu-latest
-            platform: linux
-          - os: ubuntu-latest
-            platform: android
-          - os: macos-latest
-            platform: mac
-          - os: macos-latest
-            platform: ios
-          - os: windows-latest
-            platform: windows
+          - platform: windows
+            os: windows-latest
+          - platform: linux
+            os: ubuntu-latest
+          - platform: mac
+            os: macos-latest
+          - platform: android
+            os: ubuntu-latest
+          - platform: ios
+            os: macos-latest
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
