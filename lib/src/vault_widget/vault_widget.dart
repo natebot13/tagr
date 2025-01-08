@@ -1,34 +1,30 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:dismissible_page/dismissible_page.dart';
 import 'package:eval_ex/expression.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
-import 'package:mime/mime.dart';
 import 'package:path/path.dart';
 import 'package:tagr/src/cubit/search_cubit.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
+import 'package:tagr/src/vault_widget/file_grid_item.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
-import 'package:tagr/src/preview_widget.dart';
-import 'package:transparent_image/transparent_image.dart';
+import 'package:tagr/src/vault_widget/preview_widget.dart';
 
 class VaultWidget extends StatelessWidget {
-  final Directory root;
-  final Vault vault;
-  const VaultWidget(this.root, this.vault, {super.key});
+  final VaultOpen vaultOpen;
+  const VaultWidget(this.vaultOpen, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => SelectionCubit()),
-        BlocProvider(create: (context) => SearchCubit()),
+        BlocProvider(create: (context) => SearchCubit(vaultOpen)),
       ],
       child: isDesktop() ? _buildDesktopUi() : _buildMobileUi(),
     );
@@ -39,7 +35,7 @@ class VaultWidget extends StatelessWidget {
       direction: Axis.horizontal,
       children: [
         ResizableChild(
-          child: FileGridWidget(vault: vault, root: root),
+          child: FileGridWidget(vault: vaultOpen.vault, root: vaultOpen.root),
         ),
         ResizableChild(child: Builder(builder: (context) {
           final vaultState = context.watch<VaultCubit>().state;
@@ -104,8 +100,8 @@ class VaultWidget extends StatelessWidget {
           children: [
             LayoutBuilder(builder: (context, constraints) {
               return FileGridWidget(
-                  vault: vault,
-                  root: root,
+                  vault: vaultOpen.vault,
+                  root: vaultOpen.root,
                   bottomPadding: state.selected.isNotEmpty
                       ? constraints.maxHeight * 0.15
                       : 0);
@@ -236,51 +232,6 @@ class NoImplicitScrollPhysics extends AlwaysScrollableScrollPhysics {
   }
 }
 
-extension on SearchTerm {
-  /// To be used from an "every" context
-  bool matches(List<TagTypeValuePair> typeValuePairs) {
-    final matchedPair = typeValuePairs.firstWhereOrNull(
-      (typeValuePair) => typeValuePair.tagType.name.toLowerCase() == term,
-    );
-    if (matchedPair == null && isPositive) return false;
-    if (matchedPair != null && isNegative) return false;
-    if (isNegative) return true;
-
-    // Being here means we have a nameMatch and we're positive
-
-    // Flags are always matches
-    if (matchedPair!.tagType.isFlag) return true;
-
-    // If the param is null or empty, it's a match
-    if (param == null || param!.isEmpty) return true;
-
-    // Check the param
-    var tagValue = matchedPair.tagValue!;
-    if (tagValue.whichValue() == TagValue_Value.notSet) {
-      tagValue = matchedPair.tagType.defaultValue;
-    }
-    final valueString = tagValue.asStringValue();
-    final exp = Expression('$valueString$param');
-
-    try {
-      return exp.eval().toString() == '1';
-    } on ExpressionException catch (e) {
-      return false;
-    }
-  }
-}
-
-bool filterFunction(List<SearchTerm> searchTerms, VaultFile file, Vault vault) {
-  final nameValues = file.tags.values.entries
-      .map(
-        (entry) => TagTypeValuePair(
-            tagType: vault.tagTypes[entry.key]!, tagValue: entry.value),
-      )
-      .toList();
-
-  return searchTerms.every((searchTerm) => searchTerm.matches(nameValues));
-}
-
 class FileGridWidget extends StatelessWidget {
   const FileGridWidget({
     super.key,
@@ -299,9 +250,7 @@ class FileGridWidget extends StatelessWidget {
     final numSelected = selectionState.selected.length;
     final multiSelect = selectionState is SelectionMultiple;
     final searchState = context.watch<SearchCubit>().state;
-    final filtered = vault.files
-        .where((file) => filterFunction(searchState.searchTerms, file, vault))
-        .toList();
+
     return Padding(
       padding: const EdgeInsets.all(4),
       child: CustomScrollView(
@@ -335,92 +284,22 @@ class FileGridWidget extends StatelessWidget {
             // pinned: true,
             primary: true,
           ),
-          SliverGrid.builder(
-            itemCount: filtered.length,
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 300,
-              mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
-              childAspectRatio: 1,
-            ),
-            itemBuilder: (context, i) => FileGridItem(root, filtered[i]),
-          ),
-          SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
-        ],
-      ),
-    );
-  }
-}
-
-class FileGridItem extends StatelessWidget {
-  final VaultFile file;
-  final Directory root;
-  const FileGridItem(this.root, this.file, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    String id = file.path;
-    ImageProvider provider;
-    final mimeType = lookupMimeType(file.path);
-    if (mimeType?.contains('image') ?? false) {
-      provider = FileImage(File(join(root.path, file.path)));
-    } else {
-      provider = const AssetImage('assets/images/unknown.png');
-    }
-    provider = ResizeImage.resizeIfNeeded(300, null, provider);
-    return GestureDetector(
-      onTap: () => context.read<SelectionCubit>().select(
-            id,
-            multi: HardwareKeyboard.instance.isControlPressed,
-          ),
-      onLongPress: isDesktop()
-          ? null
-          : () => context.read<SelectionCubit>().select(id, multi: true),
-      child: BlocConsumer<SelectionCubit, SelectionState>(
-        listener: (context, state) async {
-          if (state is SelectionSingle && state.selected.contains(id)) {
-            if (isMobile()) {
-              await context.pushTransparentRoute(
-                Material(
-                  color: Colors.transparent,
-                  child: MultiBlocProvider(
-                    providers: [
-                      BlocProvider.value(value: context.read<VaultCubit>()),
-                      BlocProvider.value(value: context.read<SelectionCubit>()),
-                    ],
-                    child: PreviewPage(file: id),
-                  ),
-                ),
-              );
-              if (context.mounted) context.read<SelectionCubit>().unselect();
-            }
-          }
-        },
-        builder: (context, state) {
-          final selected =
-              (state is SelectionSingle && state.selected.contains(id)) ||
-                  (state is SelectionMultiple && state.selected.contains(id));
-          return Container(
-            color: Theme.of(context).focusColor,
-            child: AnimatedPadding(
-              duration: const Duration(milliseconds: 80),
-              padding:
-                  selected ? const EdgeInsets.all(8) : const EdgeInsets.all(0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 80),
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                    borderRadius:
-                        BorderRadius.all(Radius.circular(selected ? 16 : 0))),
-                child: PreviewImage(
-                  id: id,
-                  provider: provider,
-                  fit: BoxFit.cover,
-                ),
+          if (searchState is SearchResults)
+            SliverGrid.builder(
+              itemCount: searchState.results.length,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 300,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 4,
+                childAspectRatio: 1,
+              ),
+              itemBuilder: (context, i) => FileGridItem(
+                root,
+                searchState.results[i],
               ),
             ),
-          );
-        },
+          SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
+        ],
       ),
     );
   }

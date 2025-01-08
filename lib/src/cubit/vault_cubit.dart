@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:protobuf/protobuf.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
@@ -34,9 +36,33 @@ class VaultCubit extends Cubit<VaultState> {
     return super.close();
   }
 
+  Future<void> pickVault() async {
+    final selectedPath = await FilePicker.platform.getDirectoryPath();
+
+    // Valid path checking
+    if (selectedPath == null) return;
+
+    final storagePerms = await Permission.manageExternalStorage.request();
+    if (storagePerms.isDenied) {
+      emit(VaultLoadFailure('Storage permission is denied'));
+      return;
+    }
+
+    if (selectedPath == '/' || selectedPath == 'C:\\') {
+      emit(VaultLoadFailure("Don't pick the root directory"));
+      return;
+    }
+
+    openVault(selectedPath);
+  }
+
   Future<void> openVault(String path) async {
     emit(VaultLoading());
     await changeRoot(path);
+  }
+
+  closeVault() {
+    emit(VaultClosed());
   }
 
   Future<void> changeRoot(String path) async {

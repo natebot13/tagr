@@ -16,11 +16,23 @@ class PreviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vaultState = context.watch<VaultCubit>().state;
+    return BlocBuilder(builder: (context, state) {
+      if (state is VaultOpen) {
+        return _PreviewPage(vaultOpen: state, file: file);
+      }
+      return const Text("Vault needs to be open");
+    });
+  }
+}
+
+class _PreviewPage extends StatelessWidget {
+  final String file;
+  final VaultOpen vaultOpen;
+  const _PreviewPage({required this.vaultOpen, required this.file, super.key});
+
+  @override
+  Widget build(BuildContext context) {
     final selectionState = context.watch<SelectionCubit>().state;
-    if (vaultState is! VaultOpen) {
-      throw StateError('PreviewPage requires VaultOpen state');
-    }
     return BlocProvider(
       create: (context) => TagFilterCubit(),
       child: Container(
@@ -39,13 +51,13 @@ class PreviewPage extends StatelessWidget {
                   ),
                   child: PreviewImage(
                     id: file,
-                    provider: vaultState.imageProvider(file),
+                    provider: vaultOpen.imageProvider(file),
                   ),
                 ),
               ),
             ),
           ),
-          PreviewTagsSliver(vaultState.tags({file}), {file}),
+          PreviewTagsSliver(vaultOpen.tags({file}), {file}),
           EditPropertiesButtonSliver({file}),
           TagsSearch(selectionState.selected),
         ]),
@@ -256,7 +268,9 @@ class TagsSearch extends StatelessWidget {
   Widget build(BuildContext context) {
     final searchState = context.watch<TagFilterCubit>().state;
     final vaultState = context.watch<VaultCubit>().state;
-    if (vaultState is! VaultOpen) throw StateError('Wrong state');
+    if (vaultState is! VaultOpen) {
+      throw StateError("Vault must be open for TagSearch");
+    }
     final tags = vaultState.tags(fileIds);
     final filtered = vaultState.vault.tagTypes.entries
         .where((entry) => entry.value.name.contains(searchState.query))

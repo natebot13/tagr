@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
-import 'package:tagr/src/home_widget.dart';
+import 'package:tagr/src/home_widget/home_widget.dart';
 import 'package:tagr/src/repository/vault_repository.dart';
 
 void main() {
@@ -39,25 +39,48 @@ class DrawerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
+      child: Column(
         children: [
+          Expanded(
+            child: ListView(
+              children: [
+                ListTile(
+                  onTap: () {
+                    Scaffold.of(context).closeDrawer();
+                    final vaultCubit = context.read<VaultCubit>();
+                    showModalBottomSheet(
+                      context: context,
+                      clipBehavior: Clip.antiAlias,
+                      builder: (context) {
+                        return BlocProvider.value(
+                          value: vaultCubit,
+                          child: const SingleChildScrollView(
+                              child: TagTypesEditor()),
+                        );
+                      },
+                    );
+                  },
+                  title: const Text('Manage Tags'),
+                ),
+                ListTile(
+                  title: const Text("Gallery View"),
+                  onTap: () {},
+                ),
+                ListTile(
+                  title: const Text("Table View"),
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
           ListTile(
             onTap: () {
               Scaffold.of(context).closeDrawer();
-              final vaultCubit = context.read<VaultCubit>();
-              showModalBottomSheet(
-                context: context,
-                clipBehavior: Clip.antiAlias,
-                builder: (context) {
-                  return BlocProvider.value(
-                    value: vaultCubit,
-                    child: const SingleChildScrollView(child: TagTypesEditor()),
-                  );
-                },
-              );
+              context.read<VaultCubit>().closeVault();
             },
-            title: const Text('Manage Tags'),
-          ),
+            title: const Text("Close vault"),
+            leading: const Icon(Icons.logout),
+          )
         ],
       ),
     );
