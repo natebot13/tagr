@@ -42,6 +42,7 @@ class SearchCubit extends Cubit<SearchState> {
       progress.addAll(files);
       emit(SearchResults(progress));
     }
+    emit(SearchResults(progress));
   }
 
   List<SearchTerm> parse(String query) {
@@ -119,7 +120,7 @@ extension on SearchTerm {
       try {
         if (!exp.isBoolean()) exp = Expression("$lhs=$rhs");
         return exp.eval().toString() == '1';
-      } on ExpressionException catch (e) {
+      } on ExpressionException {
         return false;
       }
     }
