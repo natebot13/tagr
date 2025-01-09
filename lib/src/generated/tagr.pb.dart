@@ -76,6 +76,7 @@ class VaultFile extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'VaultFile', createEmptyInstance: create)
     ..aOS(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'path')
     ..aOM<MapValue>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'tags', subBuilder: MapValue.create)
+    ..pPS(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'children')
     ..hasRequiredFields = false
   ;
 
@@ -83,6 +84,7 @@ class VaultFile extends $pb.GeneratedMessage {
   factory VaultFile({
     $core.String? path,
     MapValue? tags,
+    $core.Iterable<$core.String>? children,
   }) {
     final _result = create();
     if (path != null) {
@@ -90,6 +92,9 @@ class VaultFile extends $pb.GeneratedMessage {
     }
     if (tags != null) {
       _result.tags = tags;
+    }
+    if (children != null) {
+      _result.children.addAll(children);
     }
     return _result;
   }
@@ -133,6 +138,9 @@ class VaultFile extends $pb.GeneratedMessage {
   void clearTags() => clearField(2);
   @$pb.TagNumber(2)
   MapValue ensureTags() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  $core.List<$core.String> get children => $_getList(2);
 }
 
 class TagType extends $pb.GeneratedMessage {
@@ -142,6 +150,7 @@ class TagType extends $pb.GeneratedMessage {
     ..aOS(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'category')
     ..aOM<TagValue>(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'defaultValue', subBuilder: TagValue.create)
     ..aOB(5, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'isFlag')
+    ..aOB(6, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'isHidden')
     ..hasRequiredFields = false
   ;
 
@@ -152,6 +161,7 @@ class TagType extends $pb.GeneratedMessage {
     $core.String? category,
     TagValue? defaultValue,
     $core.bool? isFlag,
+    $core.bool? isHidden,
   }) {
     final _result = create();
     if (id != null) {
@@ -168,6 +178,9 @@ class TagType extends $pb.GeneratedMessage {
     }
     if (isFlag != null) {
       _result.isFlag = isFlag;
+    }
+    if (isHidden != null) {
+      _result.isHidden = isHidden;
     }
     return _result;
   }
@@ -238,6 +251,15 @@ class TagType extends $pb.GeneratedMessage {
   $core.bool hasIsFlag() => $_has(4);
   @$pb.TagNumber(5)
   void clearIsFlag() => clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get isHidden => $_getBF(5);
+  @$pb.TagNumber(6)
+  set isHidden($core.bool v) { $_setBool(5, v); }
+  @$pb.TagNumber(6)
+  $core.bool hasIsHidden() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearIsHidden() => clearField(6);
 }
 
 enum TagValue_Value {

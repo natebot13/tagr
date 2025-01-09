@@ -20,7 +20,7 @@ class HomeWidget extends StatelessWidget {
         VaultLoadFailure() => Center(
             child: Text(state.message),
           ),
-        VaultOpen() => VaultWidget(state),
+        VaultOpen() => const VaultWidget(),
       };
     });
   }

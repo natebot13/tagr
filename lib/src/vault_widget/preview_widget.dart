@@ -1,14 +1,16 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:collection/collection.dart';
 import 'package:dart_casing/dart_casing.dart';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tagr/src/cubit/tag_filter_cubit.dart';
+import 'package:transparent_image/transparent_image.dart';
+
 import 'package:tagr/src/cubit/selection_cubit.dart';
+import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
-import 'package:transparent_image/transparent_image.dart';
 
 class PreviewPage extends StatelessWidget {
   final String file;
@@ -16,7 +18,7 @@ class PreviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder(builder: (context, state) {
+    return BlocBuilder<VaultCubit, VaultState>(builder: (context, state) {
       if (state is VaultOpen) {
         return _PreviewPage(vaultOpen: state, file: file);
       }
@@ -28,7 +30,11 @@ class PreviewPage extends StatelessWidget {
 class _PreviewPage extends StatelessWidget {
   final String file;
   final VaultOpen vaultOpen;
-  const _PreviewPage({required this.vaultOpen, required this.file, super.key});
+  const _PreviewPage({
+    super.key,
+    required this.file,
+    required this.vaultOpen,
+  });
 
   @override
   Widget build(BuildContext context) {

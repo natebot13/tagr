@@ -13,7 +13,7 @@ import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
 import 'package:tagr/src/generated/tagr.pbserver.dart';
 
-part 'search_state.dart';
+part 'filter_state.dart';
 
 class _FilterPair {
   bool keep;
@@ -21,33 +21,32 @@ class _FilterPair {
   _FilterPair(this.keep, this.file);
 }
 
-class SearchCubit extends Cubit<SearchState> {
-  VaultOpen vaultOpen;
-  SearchCubit(this.vaultOpen) : super(SearchResults(vaultOpen.vault.files));
+class FilterCubit extends Cubit<FilterState> {
+  FilterCubit() : super(FilterInitial());
 
-  void search(value) async {
-    final searchTerms = parse(value);
+  void filter(String query, VaultOpen vaultOpen) async {
+    final filterTerms = parse(query);
 
     final progress = <VaultFile>[];
     final bufferedFilterStream = Stream.fromIterable(vaultOpen.vault.files)
         .asyncMap((file) async => _FilterPair(
-              await filterFunction(searchTerms, file, vaultOpen),
+              await filterFunction(filterTerms, file, vaultOpen),
               file,
             ))
         .where((pair) => pair.keep)
         .map((pair) => pair.file)
         .bufferTime(const Duration(milliseconds: 200));
-    // This could use a periodic
+
     await for (final files in bufferedFilterStream) {
       progress.addAll(files);
-      emit(SearchResults(progress));
+      emit(FilterResults(query, progress));
     }
-    emit(SearchResults(progress));
+    emit(FilterResults(query, progress));
   }
 
-  List<SearchTerm> parse(String query) {
+  List<FilterTerm> parse(String query) {
     // https://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double#comment40428033_366532
-    // For example: 'this is a string with "quoted text"' => ['this', 'is', 'a', 'string', 'with', 'quoted text']
+    // For example: 'unquoted and "quoted text"' => ['unquoted', 'and', 'quoted text']
     final quoteSplitPattern = RegExp(r'''"([^"]*)"|'([^']*)'|[^\s]+''');
 
     // https://stackoverflow.com/a/366532/2577975
@@ -67,34 +66,54 @@ class SearchCubit extends Cubit<SearchState> {
         term = t.take(t.length - 1).join(':');
         param = t.last;
       }
-      return SearchTerm(term, isNegative: isNegative, param: param);
+      return FilterTerm(term, isNegative: isNegative, param: param);
     }).toList();
   }
 
   Future<bool> filterFunction(
-    List<SearchTerm> searchTerms,
+    List<FilterTerm> filterTerms,
     VaultFile file,
     VaultOpen vaultOpen,
   ) async {
+    final tagTypePairs = file.tags.values.entries.map(
+      (entry) => TagTypeValuePair(
+        tagType: vaultOpen.vault.tagTypes[entry.key]!,
+        tagValue: entry.value,
+      ),
+    );
+
+    final hiddenTags = tagTypePairs.where((pair) => pair.tagType.isHidden);
+    final filteredForHidden = hiddenTags.any(
+      (pair) => filterTerms.any(
+        (term) => pair.tagType.name.toLowerCase() == term.term,
+      ),
+    );
+    if (hiddenTags.isNotEmpty && !filteredForHidden) return false;
+
     final matches = await Future.wait(
-      searchTerms.map((term) => term.matches(file, vaultOpen)),
+      filterTerms.map(
+        (term) => term.matches(tagTypePairs, vaultOpen.fullPath(file.path)),
+      ),
     );
     return matches.every((b) => b);
   }
 }
 
-extension on SearchTerm {
+extension on FilterTerm {
   /// To be used from an "every" context
-  Future<bool> matches(VaultFile file, VaultOpen vaultOpen) async {
+  Future<bool> matches(
+    Iterable<TagTypeValuePair> tagTypePairs,
+    String filePath,
+  ) async {
     if (isMeta) {
       String lhs = '';
       String rhs = '';
       if (term == '#tags') {
-        lhs = '${file.tags.values.length}';
+        lhs = '${tagTypePairs.length}';
         rhs = param?.isNotEmpty == true ? param! : '>0';
       }
       if (term == '#modified') {
-        final stat = await FileStat.stat(vaultOpen.fullPath(file.path));
+        final stat = await FileStat.stat(filePath);
         lhs = '${stat.modified.millisecondsSinceEpoch}';
         rhs = param?.isNotEmpty == true ? param! : '>0';
       }
@@ -126,16 +145,9 @@ extension on SearchTerm {
     }
 
     // Not a meta tag, see if it matches a file tag
-    final matchedPair = file.tags.values.entries
-        .map(
-          (entry) => TagTypeValuePair(
-            tagType: vaultOpen.vault.tagTypes[entry.key]!,
-            tagValue: entry.value,
-          ),
-        )
-        .firstWhereOrNull(
-          (typeValuePair) => typeValuePair.tagType.name.toLowerCase() == term,
-        );
+    final matchedPair = tagTypePairs.firstWhereOrNull(
+      (typeValuePair) => typeValuePair.tagType.name.toLowerCase() == term,
+    );
 
     if (matchedPair == null && isPositive) return false;
     if (matchedPair != null && isNegative) return false;

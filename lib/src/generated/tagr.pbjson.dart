@@ -37,11 +37,12 @@ const VaultFile$json = const {
   '2': const [
     const {'1': 'path', '3': 1, '4': 1, '5': 9, '10': 'path'},
     const {'1': 'tags', '3': 2, '4': 1, '5': 11, '6': '.MapValue', '10': 'tags'},
+    const {'1': 'children', '3': 3, '4': 3, '5': 9, '10': 'children'},
   ],
 };
 
 /// Descriptor for `VaultFile`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List vaultFileDescriptor = $convert.base64Decode('CglWYXVsdEZpbGUSEgoEcGF0aBgBIAEoCVIEcGF0aBIdCgR0YWdzGAIgASgLMgkuTWFwVmFsdWVSBHRhZ3M=');
+final $typed_data.Uint8List vaultFileDescriptor = $convert.base64Decode('CglWYXVsdEZpbGUSEgoEcGF0aBgBIAEoCVIEcGF0aBIdCgR0YWdzGAIgASgLMgkuTWFwVmFsdWVSBHRhZ3MSGgoIY2hpbGRyZW4YAyADKAlSCGNoaWxkcmVu');
 @$core.Deprecated('Use tagTypeDescriptor instead')
 const TagType$json = const {
   '1': 'TagType',
@@ -51,11 +52,12 @@ const TagType$json = const {
     const {'1': 'category', '3': 3, '4': 1, '5': 9, '10': 'category'},
     const {'1': 'default_value', '3': 4, '4': 1, '5': 11, '6': '.TagValue', '10': 'defaultValue'},
     const {'1': 'is_flag', '3': 5, '4': 1, '5': 8, '10': 'isFlag'},
+    const {'1': 'is_hidden', '3': 6, '4': 1, '5': 8, '10': 'isHidden'},
   ],
 };
 
 /// Descriptor for `TagType`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List tagTypeDescriptor = $convert.base64Decode('CgdUYWdUeXBlEg4KAmlkGAEgASgFUgJpZBISCgRuYW1lGAIgASgJUgRuYW1lEhoKCGNhdGVnb3J5GAMgASgJUghjYXRlZ29yeRIuCg1kZWZhdWx0X3ZhbHVlGAQgASgLMgkuVGFnVmFsdWVSDGRlZmF1bHRWYWx1ZRIXCgdpc19mbGFnGAUgASgIUgZpc0ZsYWc=');
+final $typed_data.Uint8List tagTypeDescriptor = $convert.base64Decode('CgdUYWdUeXBlEg4KAmlkGAEgASgFUgJpZBISCgRuYW1lGAIgASgJUgRuYW1lEhoKCGNhdGVnb3J5GAMgASgJUghjYXRlZ29yeRIuCg1kZWZhdWx0X3ZhbHVlGAQgASgLMgkuVGFnVmFsdWVSDGRlZmF1bHRWYWx1ZRIXCgdpc19mbGFnGAUgASgIUgZpc0ZsYWcSGwoJaXNfaGlkZGVuGAYgASgIUghpc0hpZGRlbg==');
 @$core.Deprecated('Use tagValueDescriptor instead')
 const TagValue$json = const {
   '1': 'TagValue',

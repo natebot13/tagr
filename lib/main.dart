@@ -181,7 +181,18 @@ class TagTypeEditorBodyTile extends StatelessWidget {
                   context: context,
                 ),
               ],
-            )
+            ),
+          Row(
+            children: [
+              const Text("Hidden"),
+              Checkbox(
+                value: tagType.isHidden,
+                onChanged: (value) => context
+                    .read<VaultCubit>()
+                    .updateTagType(tagType.id, TagType(isHidden: value)),
+              )
+            ],
+          )
         ],
       ),
     );
