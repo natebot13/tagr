@@ -3,8 +3,8 @@ import 'package:collection/collection.dart';
 import 'package:dart_casing/dart_casing.dart';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/widgets/tag_value_editor.dart';
 import 'package:transparent_image/transparent_image.dart';
 
@@ -58,7 +58,7 @@ class _PreviewPage extends StatelessWidget {
                   ),
                   child: PreviewImage(
                     id: file,
-                    provider: vaultOpen.imageProvider(file),
+                    provider: imageProvider(vaultOpen.root, file),
                   ),
                 ),
               ),

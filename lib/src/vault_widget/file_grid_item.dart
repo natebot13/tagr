@@ -24,6 +24,7 @@ class FileGridItem extends StatelessWidget {
     if (mimeType?.contains('image') ?? false) {
       provider = FileImage(File(join(root.path, file.path)));
     } else {
+      print('Unhandled mime type: $mimeType');
       provider = const AssetImage('assets/images/unknown.png');
     }
     provider = ResizeImage.resizeIfNeeded(300, null, provider);

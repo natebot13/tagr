@@ -5,6 +5,7 @@ import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
+import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/vault_widget/file_grid_widget.dart';
 import 'package:tagr/src/vault_widget/preview_widget.dart';
 
@@ -38,7 +39,7 @@ class DesktopVaultWidget extends StatelessWidget {
                   ResizableChild(
                     child: PreviewImage(
                       id: firstId,
-                      provider: vaultState.imageProvider(firstId),
+                      provider: imageProvider(vaultState.root, firstId),
                     ),
                   ),
                   if (selectionState.selected.isNotEmpty)

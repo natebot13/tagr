@@ -75,7 +75,6 @@ class _TagValueEditorState extends State<_TagValueEditor> {
 
   @override
   void initState() {
-    print("initState for TagValueEditor");
     if (typeValuePair.partial) {
       setControllerText(TagValue());
     } else {

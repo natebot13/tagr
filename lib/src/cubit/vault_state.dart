@@ -47,25 +47,6 @@ final class VaultOpen extends VaultState {
         tagMap = vault.tagTypes
             .map((id, type) => MapEntry(type.name.toLowerCase(), id));
 
-  String fullPath(String id) {
-    final i = fileMap[id]!;
-    return path.join(root.path, vault.files[i].path);
-  }
-
-  ImageProvider defaultImage() {
-    return const AssetImage('assets/images/unknown.png');
-  }
-
-  ImageProvider imageProvider(String? id) {
-    if (id == null) return defaultImage();
-    final filePath = fullPath(id);
-    final mimeType = lookupMimeType(filePath);
-    if (mimeType?.contains('image') ?? false) {
-      return FileImage(File(filePath));
-    }
-    return defaultImage();
-  }
-
   Map<int, TagTypeValuePair> tags(Set<String> ids) {
     final entries = ids.expand(
       (id) => vault.files[fileMap[id]!].tags.values.entries.map(
