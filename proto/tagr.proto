@@ -23,9 +23,16 @@ message TagType {
   string category = 3;
   TagValue default_value = 4;
 
-  // Flag tags don't care about having a value. Just their presence matters
-  bool is_flag = 5;
+  oneof Subtype {
+    // Flag tags don't care about having a value. Just their presence matters
+    bool is_flag = 5;
+    // Reference to another file. Only string type is supported for references.
+    // Maybe one day list of strings will be supported...
+    bool is_reference = 7;
+  }
+
   bool is_hidden = 6;
+
 }
 
 message TagValue {

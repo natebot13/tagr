@@ -67,15 +67,15 @@ class VaultCubit extends Cubit<VaultState> {
 
   Future<void> changeRoot(String path) async {
     // Copy for type promotion
-    final _state = state;
+    final localState = state;
 
-    if (_state is VaultOpen && _state.root.path == path) return;
+    if (localState is VaultOpen && localState.root.path == path) return;
 
     if (!await FileSystemEntity.isDirectory(path)) {
-      if (_state is VaultOpen) {
+      if (localState is VaultOpen) {
         emit(VaultOpen(
-          _state.root,
-          _state.vault,
+          localState.root,
+          localState.vault,
           ephemeralIssue: 'Failed to open. $path is not a directory.',
         ));
       } else {
@@ -140,10 +140,6 @@ class VaultCubit extends Cubit<VaultState> {
     TagValue? value,
   ]) {
     return _updateVault((state, vault) {
-      if (!vault.tagTypes.containsKey(tagTypeId)) {
-        logger.e('TagTypes missing id: $tagTypeId');
-        return false;
-      }
       return _updateTag(
         fileIds: fileIds,
         tagTypeId: tagTypeId,
@@ -154,6 +150,8 @@ class VaultCubit extends Cubit<VaultState> {
     });
   }
 
+  /// Calling this function with a null [value], will either keep the current
+  /// value, or use the tag type default value.
   bool _updateTag({
     required Set<String> fileIds,
     required int tagTypeId,
@@ -161,23 +159,46 @@ class VaultCubit extends Cubit<VaultState> {
     required Vault vault,
     TagValue? value,
   }) {
+    // Validation checks
+    if (!vault.tagTypes.containsKey(tagTypeId)) {
+      logger.e('TagTypes missing id: $tagTypeId');
+      return false;
+    }
+
+    final tagType = vault.tagTypes[tagTypeId]!;
+
+    final defaultType = tagType.defaultValue.whichValue();
+    final valueType = value?.whichValue();
+
+    if (valueType != null &&
+        valueType != TagValue_Value.notSet &&
+        valueType != defaultType) {
+      logger.e(
+        'Tried to assign a value of type $valueType to a tag of type $defaultType. Skipping.',
+      );
+      return false;
+    }
+
     bool changed = false;
     for (final fileId in fileIds) {
-      var eachValue = value;
+      var newValue = value;
       final vaultFile = _getVaultFile(fileId, state, vault);
       if (vaultFile == null) return false;
       if (!vaultFile.hasTags()) vaultFile.tags = MapValue();
-      final tagTypeDefaultValue = vault.tagTypes[tagTypeId]?.defaultValue;
-      final tagValue = vaultFile.tags.values[tagTypeId];
-      if (eachValue == null) {
-        if (tagTypeDefaultValue?.whichValue() == tagValue?.whichValue()) {
-          eachValue = tagValue ?? TagValue();
+      final currentValue = vaultFile.tags.values[tagTypeId];
+
+      if (newValue == null) {
+        // The value is null, so try to keep the current value.
+        // However, if the current value type is different than the tag value
+        // type, we'll also just set it to a notSet value.
+        if (tagType.defaultValue.whichValue() == currentValue?.whichValue()) {
+          newValue = currentValue ?? TagValue();
         } else {
-          eachValue = TagValue();
+          newValue = TagValue();
         }
       }
-      if (vaultFile.tags.values[tagTypeId] != eachValue) {
-        vaultFile.tags.values[tagTypeId] = eachValue;
+      if (currentValue != newValue) {
+        vaultFile.tags.values[tagTypeId] = newValue;
         changed = true;
       }
     }

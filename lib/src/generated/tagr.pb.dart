@@ -143,14 +143,27 @@ class VaultFile extends $pb.GeneratedMessage {
   $core.List<$core.String> get children => $_getList(2);
 }
 
+enum TagType_Subtype {
+  isFlag, 
+  isReference, 
+  notSet
+}
+
 class TagType extends $pb.GeneratedMessage {
+  static const $core.Map<$core.int, TagType_Subtype> _TagType_SubtypeByTag = {
+    5 : TagType_Subtype.isFlag,
+    7 : TagType_Subtype.isReference,
+    0 : TagType_Subtype.notSet
+  };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'TagType', createEmptyInstance: create)
+    ..oo(0, [5, 7])
     ..a<$core.int>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'id', $pb.PbFieldType.O3)
     ..aOS(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'name')
     ..aOS(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'category')
     ..aOM<TagValue>(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'defaultValue', subBuilder: TagValue.create)
     ..aOB(5, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'isFlag')
     ..aOB(6, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'isHidden')
+    ..aOB(7, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'isReference')
     ..hasRequiredFields = false
   ;
 
@@ -162,6 +175,7 @@ class TagType extends $pb.GeneratedMessage {
     TagValue? defaultValue,
     $core.bool? isFlag,
     $core.bool? isHidden,
+    $core.bool? isReference,
   }) {
     final _result = create();
     if (id != null) {
@@ -181,6 +195,9 @@ class TagType extends $pb.GeneratedMessage {
     }
     if (isHidden != null) {
       _result.isHidden = isHidden;
+    }
+    if (isReference != null) {
+      _result.isReference = isReference;
     }
     return _result;
   }
@@ -204,6 +221,9 @@ class TagType extends $pb.GeneratedMessage {
   @$core.pragma('dart2js:noInline')
   static TagType getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<TagType>(create);
   static TagType? _defaultInstance;
+
+  TagType_Subtype whichSubtype() => _TagType_SubtypeByTag[$_whichOneof(0)]!;
+  void clearSubtype() => clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
   $core.int get id => $_getIZ(0);
@@ -260,6 +280,15 @@ class TagType extends $pb.GeneratedMessage {
   $core.bool hasIsHidden() => $_has(5);
   @$pb.TagNumber(6)
   void clearIsHidden() => clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.bool get isReference => $_getBF(6);
+  @$pb.TagNumber(7)
+  set isReference($core.bool v) { $_setBool(6, v); }
+  @$pb.TagNumber(7)
+  $core.bool hasIsReference() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearIsReference() => clearField(7);
 }
 
 enum TagValue_Value {

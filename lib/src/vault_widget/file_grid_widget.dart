@@ -17,16 +17,12 @@ class FileGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectionState = context.watch<SelectionCubit>().state;
-    final numSelected = selectionState.selected.length;
-    final multiSelect = selectionState is SelectionMultiple;
-
     return Padding(
       padding: const EdgeInsets.all(4),
       child: CustomScrollView(
         physics: const NoImplicitScrollPhysics(),
         slivers: [
-          VaultSliverAppBar(multiSelect: multiSelect, numSelected: numSelected),
+          const VaultSliverAppBar(),
           const FilteredGrid(),
           SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
         ],
@@ -48,52 +44,55 @@ class NoImplicitScrollPhysics extends AlwaysScrollableScrollPhysics {
 }
 
 class VaultSliverAppBar extends StatelessWidget {
-  const VaultSliverAppBar({
-    super.key,
-    required this.multiSelect,
-    required this.numSelected,
-  });
-
-  final bool multiSelect;
-  final int numSelected;
+  const VaultSliverAppBar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SliverAppBar(
-      floating: true,
-      pinned: multiSelect,
-      automaticallyImplyLeading: true,
-      leading: multiSelect
-          ? IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: context.read<SelectionCubit>().unselect,
-            )
-          : null,
-      title: BlocBuilder<VaultCubit, VaultState>(
-        builder: (context, vaultState) {
-          if (vaultState is! VaultOpen) {
-            throw StateError('Vault not open');
-          }
-          return Row(
-            children: [
-              if (!multiSelect) Text(basename(vaultState.root.path)),
-              if (multiSelect) Text('$numSelected Selected'),
-              const Spacer(),
-              Expanded(
-                child: TextField(
-                  onChanged: (value) =>
-                      context.read<FilterCubit>().filter(value, vaultState),
-                  decoration: const InputDecoration(hintText: 'Search'),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-      // actions: [TextField()],
+    return BlocBuilder<SelectionCubit, SelectionState>(
+      builder: (context, state) {
+        final multiSelect = state is SelectionMultiple;
+        final numSelected = state.selected.length;
+        final isChoosing = state is SelectionChoosing;
 
-      // pinned: true,
-      primary: true,
+        return SliverAppBar(
+          floating: true,
+          pinned: multiSelect || isChoosing,
+          automaticallyImplyLeading: true,
+          leading: multiSelect || isChoosing
+              ? IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: context.read<SelectionCubit>().unselect,
+                )
+              : null,
+          title: BlocBuilder<VaultCubit, VaultState>(
+            builder: (context, vaultState) {
+              if (vaultState is! VaultOpen) {
+                throw StateError('Vault not open');
+              }
+              return Row(
+                children: [
+                  if (!multiSelect && !isChoosing)
+                    Text(basename(vaultState.root.path)),
+                  if (multiSelect) Text('$numSelected Selected'),
+                  if (isChoosing) const Text('Pick a file'),
+                  const Spacer(),
+                  Expanded(
+                    child: TextField(
+                      onChanged: (value) =>
+                          context.read<FilterCubit>().filter(value, vaultState),
+                      decoration: const InputDecoration(hintText: 'Search'),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          // actions: [TextField()],
+
+          // pinned: true,
+          primary: true,
+        );
+      },
     );
   }
 }

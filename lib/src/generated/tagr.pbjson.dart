@@ -51,13 +51,17 @@ const TagType$json = const {
     const {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
     const {'1': 'category', '3': 3, '4': 1, '5': 9, '10': 'category'},
     const {'1': 'default_value', '3': 4, '4': 1, '5': 11, '6': '.TagValue', '10': 'defaultValue'},
-    const {'1': 'is_flag', '3': 5, '4': 1, '5': 8, '10': 'isFlag'},
+    const {'1': 'is_flag', '3': 5, '4': 1, '5': 8, '9': 0, '10': 'isFlag'},
+    const {'1': 'is_reference', '3': 7, '4': 1, '5': 8, '9': 0, '10': 'isReference'},
     const {'1': 'is_hidden', '3': 6, '4': 1, '5': 8, '10': 'isHidden'},
+  ],
+  '8': const [
+    const {'1': 'Subtype'},
   ],
 };
 
 /// Descriptor for `TagType`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List tagTypeDescriptor = $convert.base64Decode('CgdUYWdUeXBlEg4KAmlkGAEgASgFUgJpZBISCgRuYW1lGAIgASgJUgRuYW1lEhoKCGNhdGVnb3J5GAMgASgJUghjYXRlZ29yeRIuCg1kZWZhdWx0X3ZhbHVlGAQgASgLMgkuVGFnVmFsdWVSDGRlZmF1bHRWYWx1ZRIXCgdpc19mbGFnGAUgASgIUgZpc0ZsYWcSGwoJaXNfaGlkZGVuGAYgASgIUghpc0hpZGRlbg==');
+final $typed_data.Uint8List tagTypeDescriptor = $convert.base64Decode('CgdUYWdUeXBlEg4KAmlkGAEgASgFUgJpZBISCgRuYW1lGAIgASgJUgRuYW1lEhoKCGNhdGVnb3J5GAMgASgJUghjYXRlZ29yeRIuCg1kZWZhdWx0X3ZhbHVlGAQgASgLMgkuVGFnVmFsdWVSDGRlZmF1bHRWYWx1ZRIZCgdpc19mbGFnGAUgASgISABSBmlzRmxhZxIjCgxpc19yZWZlcmVuY2UYByABKAhIAFILaXNSZWZlcmVuY2USGwoJaXNfaGlkZGVuGAYgASgIUghpc0hpZGRlbkIJCgdTdWJ0eXBl');
 @$core.Deprecated('Use tagValueDescriptor instead')
 const TagValue$json = const {
   '1': 'TagValue',

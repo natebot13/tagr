@@ -56,9 +56,7 @@ class FileGridItem extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          final selected =
-              (state is SelectionSingle && state.selected.contains(id)) ||
-                  (state is SelectionMultiple && state.selected.contains(id));
+          final selected = state.selected.contains(id);
           return Container(
             color: Theme.of(context).focusColor,
             child: AnimatedPadding(

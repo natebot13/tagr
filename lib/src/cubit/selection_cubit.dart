@@ -6,8 +6,15 @@ part 'selection_state.dart';
 class SelectionCubit extends Cubit<SelectionState> {
   SelectionCubit() : super(SelectionNone());
 
-  void select(String id, {bool multi = false}) {
-    if (multi || state is SelectionMultiple) {
+  void select(String id, {bool multi = false, bool forceSingle = false}) {
+    if (state is SelectionChoosing) {
+      final choosing = state as SelectionChoosing;
+      emit(SelectionChosen(choosing.tagTypeId, id, state.selected));
+      return;
+    }
+    if (forceSingle) {
+      emit(SelectionSingle(id));
+    } else if (multi || state is SelectionMultiple) {
       _addOrRemoveSelection(id);
     } else {
       if (state.selected.contains(id)) {
@@ -19,7 +26,15 @@ class SelectionCubit extends Cubit<SelectionState> {
   }
 
   void unselect() {
-    emit(SelectionNone());
+    if (state is SelectionChoosing) {
+      emit(SelectionMultiple(state.selected));
+    } else {
+      emit(SelectionNone());
+    }
+  }
+
+  void startChoosing(int tagTypeId) {
+    emit(SelectionChoosing(tagTypeId, state.selected));
   }
 
   void _addOrRemoveSelection(String id) {
