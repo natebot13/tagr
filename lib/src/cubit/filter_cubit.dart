@@ -167,9 +167,10 @@ extension on FilterTerm {
       tagValue = matchedPair.tagType.defaultValue;
     }
     final valueString = tagValue.asStringValue();
-    final exp = Expression('$valueString$param');
+    var exp = Expression('$valueString$param');
 
     try {
+      if (!exp.isBoolean()) exp = Expression('$valueString=$param');
       return exp.eval().toString() == '1';
     } on ExpressionException {
       return false;
