@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:tagr/src/constants.dart';
@@ -33,21 +35,41 @@ class VaultRepository {
       vault.mergeFromBuffer(bytes);
     } on PathNotFoundException {
       logger.i('Creating a new vault');
-      await refreshFiles(root, vault);
     }
+    await refreshFiles(root, vault);
     _saveAndEmitVault(root, vault);
   }
 
   /// Given a path and current vault, scan the directory for new files that
   /// don't already exist in the vault.
   Future<void> refreshFiles(Directory root, Vault vault) async {
-    final fileMap = Map.fromEntries(
-      vault.files.map((vaultFile) => MapEntry(vaultFile.path, vaultFile)),
-    );
+    final fileMap = <String, VaultFile>{};
+    for (final file in vault.files) {
+      if (!fileMap.containsKey(file.path)) {
+        fileMap[file.path] = file;
+        continue;
+      }
+
+      // Temp de-dup
+      final vaultFile = fileMap[file.path]!;
+
+      final a = vaultFile.hasTags() ? vaultFile.tags.values.length : 0;
+      final b = file.hasTags() ? file.tags.values.length : 0;
+
+      if (b > a) {
+        fileMap[file.path] = file;
+      }
+    }
+
+    vault.files.clear();
 
     await for (final file in _listFiles(root)) {
-      if (fileMap.containsKey(file.path)) continue;
-      vault.files.add(_buildVaultFile(root, file));
+      final normalizedFilePath = _normalizeFilePath(root, file);
+      vault.files.add(
+        fileMap.containsKey(normalizedFilePath)
+            ? fileMap[normalizedFilePath]!
+            : VaultFile(path: normalizedFilePath),
+      );
     }
   }
 
@@ -71,14 +93,13 @@ class VaultRepository {
     }
   }
 
-  VaultFile _buildVaultFile(Directory root, File file) {
+  String _normalizeFilePath(Directory root, File file) {
     final relativePath = path.relative(file.path, from: root.path);
-    return VaultFile(path: relativePath.replaceAll(r'\', '/'));
+    return relativePath.replaceAll(r'\', '/');
   }
 
   Future<void> _saveAndEmitVault(Directory root, Vault vault) async {
-    // TODO: remove once done with debugging
-    {
+    if (kDebugMode) {
       const encoder = JsonEncoder.withIndent('  ');
       await File(
         path.join(root.path, '$vaultFilename.json'),

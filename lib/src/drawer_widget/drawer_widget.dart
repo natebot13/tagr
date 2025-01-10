@@ -44,6 +44,11 @@ class DrawerWidget extends StatelessWidget {
             ),
           ),
           ListTile(
+            onTap: context.read<VaultCubit>().refreshFilesInVault,
+            leading: const Icon(Icons.refresh),
+            title: const Text('Refresh vault'),
+          ),
+          ListTile(
             onTap: () {
               Scaffold.of(context).closeDrawer();
               context.read<VaultCubit>().closeVault();

@@ -86,8 +86,8 @@ class VaultCubit extends Cubit<VaultState> {
   }
 
   void refreshFilesInVault() {
-    _updateVault((state, vault) {
-      _repository.refreshFiles(state.root, vault);
+    _updateVault((state, vault) async {
+      await _repository.refreshFiles(state.root, vault);
       return true;
     });
   }
