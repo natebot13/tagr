@@ -3,13 +3,14 @@ import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mime/mime.dart';
-import 'package:path/path.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
+import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/vault_widget/preview_widget.dart';
+import 'package:vector_graphics/vector_graphics.dart';
 
 class FileGridItem extends StatelessWidget {
   final VaultFile file;
@@ -18,27 +19,17 @@ class FileGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String id = file.path;
-    ImageProvider provider;
-    final mimeType = lookupMimeType(file.path);
-    if (mimeType?.contains('image') ?? false) {
-      provider = FileImage(File(join(root.path, file.path)));
-    } else {
-      print('Unhandled mime type: $mimeType');
-      provider = const AssetImage('assets/images/unknown.png');
-    }
-    provider = ResizeImage.resizeIfNeeded(300, null, provider);
     return GestureDetector(
       onTap: () => context.read<SelectionCubit>().select(
-            id,
+            file.path,
             multi: HardwareKeyboard.instance.isControlPressed,
           ),
       onLongPress: isDesktop()
           ? null
-          : () => context.read<SelectionCubit>().select(id, multi: true),
+          : () => context.read<SelectionCubit>().select(file.path, multi: true),
       child: BlocConsumer<SelectionCubit, SelectionState>(
         listener: (context, state) async {
-          if (state is SelectionSingle && state.selected.contains(id)) {
+          if (state is SelectionSingle && state.selected.contains(file.path)) {
             if (isMobile()) {
               await context.pushTransparentRoute(
                 Material(
@@ -48,7 +39,7 @@ class FileGridItem extends StatelessWidget {
                       BlocProvider.value(value: context.read<VaultCubit>()),
                       BlocProvider.value(value: context.read<SelectionCubit>()),
                     ],
-                    child: PreviewPage(file: id),
+                    child: PreviewPage(file: file.path),
                   ),
                 ),
               );
@@ -57,7 +48,7 @@ class FileGridItem extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          final selected = state.selected.contains(id);
+          final selected = state.selected.contains(file.path);
           return Container(
             color: Theme.of(context).focusColor,
             child: AnimatedPadding(
@@ -68,11 +59,16 @@ class FileGridItem extends StatelessWidget {
                 duration: const Duration(milliseconds: 80),
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Colors.grey[900]!, Colors.grey[800]!]),
                     borderRadius:
                         BorderRadius.all(Radius.circular(selected ? 16 : 0))),
-                child: PreviewImage(
-                  id: id,
-                  provider: provider,
+                child: previewWidget(
+                  root,
+                  file.path,
+                  resize: 300,
                   fit: BoxFit.cover,
                 ),
               ),

@@ -1,9 +1,12 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:dart_casing/dart_casing.dart';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/widgets/tag_value_editor.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -12,6 +15,8 @@ import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
+import 'package:path/path.dart' as path;
+import 'package:vector_graphics/vector_graphics_compat.dart';
 
 class PreviewPage extends StatelessWidget {
   final String file;
@@ -56,10 +61,7 @@ class _PreviewPage extends StatelessWidget {
                     maxHeight: (MediaQuery.of(context).size.height * .8) -
                         MediaQuery.of(context).viewInsets.bottom,
                   ),
-                  child: PreviewImage(
-                    id: file,
-                    provider: imageProvider(vaultOpen.root, file),
-                  ),
+                  child: previewWidget(vaultOpen.root, file),
                 ),
               ),
             ),
@@ -77,12 +79,15 @@ class PreviewImage extends StatelessWidget {
   final String? id;
   final ImageProvider provider;
   final BoxFit fit;
-  const PreviewImage({
+  PreviewImage({
     this.id,
-    required this.provider,
+    required ImageProvider provider,
     super.key,
     this.fit = BoxFit.contain,
-  });
+    int? resize,
+  }) : provider = resize != null
+            ? ResizeImage.resizeIfNeeded(resize, null, provider)
+            : provider;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +100,19 @@ class PreviewImage extends StatelessWidget {
         fit: fit,
       ),
     );
+  }
+
+  factory PreviewImage.fromPath(
+    Directory root,
+    String id, {
+    int? resize,
+    BoxFit fit = BoxFit.contain,
+  }) {
+    ImageProvider provider = FileImage(File(path.join(root.path, id)));
+    if (resize != null) {
+      provider = ResizeImage.resizeIfNeeded(resize, null, provider);
+    }
+    return PreviewImage(provider: provider, fit: fit);
   }
 }
 

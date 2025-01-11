@@ -36,12 +36,11 @@ class DesktopVaultWidget extends StatelessWidget {
               return ResizableContainer(
                 direction: Axis.vertical,
                 children: [
+                  // Big picture view
                   ResizableChild(
-                    child: PreviewImage(
-                      id: firstId,
-                      provider: imageProvider(vaultState.root, firstId),
-                    ),
+                    child: previewWidget(vaultState.root, firstId),
                   ),
+                  // File details view
                   if (selectionState.selected.isNotEmpty)
                     ResizableChild(
                       child: Column(
