@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as path;
 import 'package:tagr/src/cubit/filter_cubit.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
@@ -69,21 +69,22 @@ class VaultSliverAppBar extends StatelessWidget {
               if (vaultState is! VaultOpen) {
                 throw StateError('Vault not open');
               }
-              return Row(
-                children: [
-                  if (!multiSelect && !isChoosing)
-                    Text(basename(vaultState.root.path)),
-                  if (multiSelect) Text('$numSelected Selected'),
-                  if (isChoosing) const Text('Pick a file'),
-                  const Spacer(),
-                  Expanded(
-                    child: TextField(
-                      onChanged: (value) =>
-                          context.read<FilterCubit>().filter(value, vaultState),
-                      decoration: const InputDecoration(hintText: 'Search'),
-                    ),
-                  ),
-                ],
+              return BlocBuilder<FilterCubit, FilterState>(
+                builder: (context, filterState) {
+                  return Row(
+                    children: [
+                      if (!multiSelect && !isChoosing)
+                        Text(path.basename(vaultState.root.path)),
+                      if (multiSelect) Text('$numSelected Selected'),
+                      if (isChoosing) const Text('Pick a file'),
+                      const Spacer(),
+                      if (filterState is FilterResults)
+                        Expanded(
+                          child: FilterField(vaultState, filterState.query),
+                        ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -93,6 +94,40 @@ class VaultSliverAppBar extends StatelessWidget {
           primary: true,
         );
       },
+    );
+  }
+}
+
+class FilterField extends StatefulWidget {
+  final VaultOpen vaultState;
+  final String initialText;
+
+  const FilterField(
+    this.vaultState,
+    this.initialText, {
+    super.key,
+  });
+
+  @override
+  State<FilterField> createState() => _FilterFieldState();
+}
+
+class _FilterFieldState extends State<FilterField> {
+  final controller = TextEditingController();
+
+  @override
+  void initState() {
+    controller.text = widget.initialText;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      onChanged: (value) =>
+          context.read<FilterCubit>().filter(value, widget.vaultState),
+      decoration: const InputDecoration(hintText: 'Search'),
+      controller: controller,
     );
   }
 }

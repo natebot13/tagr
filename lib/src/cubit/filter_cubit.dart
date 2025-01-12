@@ -12,6 +12,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
+import 'package:tagr/src/helpers.dart';
 
 part 'filter_state.dart';
 
@@ -156,29 +157,35 @@ extension on FilterTerm {
         lhs = '${stat.modified.millisecondsSinceEpoch}';
         rhs = param?.isNotEmpty == true ? param! : '>0';
       }
+      if (term == 'size') {
+        final stat = await FileStat.stat(fullPath);
+        if (param == null) return true;
+        if (param!.isEmpty) return true;
+        lhs = '${stat.size}';
+        rhs = param!;
+      }
       // IDK if this should return false or true. Ideally there would be some
       // feedback to the user that they've used an invalid meta term.
-      if (lhs.isEmpty) return false;
+      if (lhs.isEmpty) return true;
 
       var exp = Expression('$lhs$rhs');
-      exp.addFunc(FunctionImpl(
-        'NOW',
-        0,
-        fEval: (params) =>
-            Decimal.fromInt(DateTime.now().millisecondsSinceEpoch),
-      ));
-      exp.addFunc(FunctionImpl(
-        'DAYS',
-        1,
-        fEval: (params) => Decimal.fromInt(Duration(
-          days: params.first.toBigInt().toInt(),
-        ).inMilliseconds),
-      ));
+      // Ugh, the way the expression lib works is dumb
+      addCustom(exp);
 
       try {
         if (!exp.isBoolean()) exp = Expression("$lhs=$rhs");
-        return exp.eval().toString() == '1';
       } on ExpressionException {
+        return false;
+      }
+      // Have to add the custom expressions every time a new instance is created
+      // I feel like it should be some static class with all the defaults,
+      // rather than stuck to the instance.
+      addCustom(exp);
+
+      try {
+        return exp.eval().toString() == '1';
+      } on ExpressionException catch (e) {
+        logger.e(e);
         return false;
       }
     }
@@ -225,6 +232,31 @@ extension on FilterTerm {
       return exp.eval().toString() == '1';
     } on ExpressionException {
       return false;
+    } on RangeError {
+      return false;
+    }
+  }
+
+  void addCustom(Expression exp) {
+    exp.addFunc(FunctionImpl(
+      'NOW',
+      0,
+      fEval: (params) => Decimal.fromInt(DateTime.now().millisecondsSinceEpoch),
+    ));
+    exp.addFunc(FunctionImpl(
+      'DAYS',
+      1,
+      fEval: (params) => Decimal.fromInt(Duration(
+        days: params.first.toBigInt().toInt(),
+      ).inMilliseconds),
+    ));
+    for (final unit in SizeUnit.values) {
+      exp.addOperator(OperatorSuffixImpl(
+        unit.name,
+        62,
+        false,
+        fEval: (d) => d * Decimal.fromInt(unit.getScale()),
+      ));
     }
   }
 }

@@ -6,7 +6,6 @@ import 'package:dart_casing/dart_casing.dart';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/widgets/tag_value_editor.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -16,7 +15,6 @@ import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
 import 'package:path/path.dart' as path;
-import 'package:vector_graphics/vector_graphics_compat.dart';
 
 class PreviewPage extends StatelessWidget {
   final String file;
@@ -37,7 +35,6 @@ class _PreviewPage extends StatelessWidget {
   final String file;
   final VaultOpen vaultOpen;
   const _PreviewPage({
-    super.key,
     required this.file,
     required this.vaultOpen,
   });

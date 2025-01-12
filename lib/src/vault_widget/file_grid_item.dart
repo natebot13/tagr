@@ -3,14 +3,12 @@ import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
 import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/vault_widget/preview_widget.dart';
-import 'package:vector_graphics/vector_graphics.dart';
 
 class FileGridItem extends StatelessWidget {
   final VaultFile file;

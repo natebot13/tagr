@@ -10,12 +10,9 @@ import 'package:protobuf/protobuf.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
 
-import 'package:logger/logger.dart';
 import 'package:tagr/src/repository/vault_repository.dart';
 
 part 'vault_state.dart';
-
-final logger = Logger();
 
 class VaultCubit extends Cubit<VaultState> {
   final VaultRepository _repository;

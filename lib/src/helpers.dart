@@ -1,15 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:logger/logger.dart';
 import 'package:mime/mime.dart' as mime;
 import 'package:path/path.dart' as path;
 import 'package:tagr/src/constants.dart';
+import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/vault_widget/preview_widget.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:vector_graphics/vector_graphics.dart';
+
+final logger = Logger();
 
 enum FileType {
   unknown,
@@ -177,4 +182,58 @@ Widget previewWidget(
           );
         }),
   };
+}
+
+enum SizeUnit {
+  b,
+  kb,
+  mb,
+  gb,
+  tb;
+
+  static final _base2Units = {
+    b: 1,
+    kb: pow(2, 10) as int,
+    mb: pow(2, 20) as int,
+    gb: pow(2, 30) as int,
+    tb: pow(2, 40) as int,
+  };
+
+  static final _base10Units = {
+    b: 1,
+    kb: pow(10, 3) as int,
+    mb: pow(10, 6) as int,
+    gb: pow(10, 9) as int,
+    tb: pow(10, 12) as int,
+  };
+
+  int getScale([int base = 2]) {
+    return switch (base) {
+      2 => _base2Units[this]!,
+      10 => _base10Units[this]!,
+      _ => throw ArgumentError("Only base 2 or 10"),
+    };
+  }
+}
+
+extension SizeUnitParsing on String {
+  static final unitsNameMap = SizeUnit.values.asNameMap();
+
+  /// Parses the string such as "10.3kb" into the number of bytes
+  /// Returns null if the string isn't a parsable byte size
+  int? tryParseAsByteSize({int base = 2}) {
+    if (base != 2 || base != 10) throw ArgumentError("Only base 2 or 10");
+    var unit = unitsNameMap[last(2).toLowerCase()];
+    unit ??= unitsNameMap['b']!;
+
+    final valueString = toLowerCase().replaceFirst(RegExp(unit.name), '');
+    final value = double.tryParse(valueString);
+    if (value == null) return null;
+    final scale = switch (base) {
+      2 => unit.getScale(),
+      10 => unit.getScale(),
+      _ => throw ArgumentError()
+    };
+    return (value * scale).ceil();
+  }
 }

@@ -44,3 +44,11 @@ extension StringValue on TagValue {
     };
   }
 }
+
+extension StringHelpers on String {
+  String last([int n = 1]) {
+    final from = length - n;
+    if (from.isNegative) return this;
+    return substring(from);
+  }
+}
