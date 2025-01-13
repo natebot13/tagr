@@ -152,9 +152,13 @@ extension on FilterTerm {
         lhs = '${tagTypePairs.length}';
         rhs = param?.isNotEmpty == true ? param! : '>0';
       }
-      if (term == 'modified') {
+      if (['created', 'modified'].contains(term)) {
         final stat = await FileStat.stat(fullPath);
-        lhs = '${stat.modified.millisecondsSinceEpoch}';
+        if (term == 'created') {
+          lhs = '${stat.changed.millisecondsSinceEpoch}';
+        } else if (term == 'modified') {
+          lhs = '${stat.modified.millisecondsSinceEpoch}';
+        }
         rhs = param?.isNotEmpty == true ? param! : '>0';
       }
       if (term == 'size') {
