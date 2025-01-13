@@ -334,9 +334,9 @@ class TagsSearch extends StatelessWidget {
             ? Icons.check_box
             : Icons.check_box_outline_blank;
     return ListTile(
+      leading: Icon(icon),
       title: Text(entry.value.name),
       onTap: fn,
-      trailing: Icon(icon),
     );
   }
 }
