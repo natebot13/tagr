@@ -16,13 +16,20 @@ import 'package:tagr/src/helpers.dart';
 
 part 'filter_state.dart';
 
+enum MetaTerm {
+  tags,
+  created,
+  modified,
+  size,
+}
+
+final Map<String, MetaTerm> metaTermNameMap = MetaTerm.values.asNameMap();
+
 class FilterTerm {
   final String term;
   final String? param;
   final bool isNegative;
   final TermType termType;
-  bool get isMeta => termType == TermType.meta;
-  bool get isPath => termType == TermType.path;
   bool get isPositive => !isNegative;
   FilterTerm._(
     this.term, {
@@ -59,6 +66,50 @@ class FilterTerm {
       isNegative: isNegative,
       termType: termType,
     );
+  }
+}
+
+/// Helper class for expressions
+class FilterExpressionBuilder {
+  String lhs = '';
+  String rhs = '';
+  String defaultOp = '=';
+
+  Expression? build() {
+    final expression = Expression('$lhs$rhs');
+    _addCustom(expression);
+
+    try {
+      if (!expression.isBoolean()) return Expression('$lhs$defaultOp$rhs');
+      return expression;
+    } on ExpressionException catch (e) {
+      logger.e(e);
+      return null;
+    }
+  }
+
+  // Adds all the custom functions to the expression
+  void _addCustom(Expression exp) {
+    exp.addFunc(FunctionImpl(
+      'NOW',
+      0,
+      fEval: (params) => Decimal.fromInt(DateTime.now().millisecondsSinceEpoch),
+    ));
+    exp.addFunc(FunctionImpl(
+      'DAYS',
+      1,
+      fEval: (params) => Decimal.fromInt(Duration(
+        days: params.first.toBigInt().toInt(),
+      ).inMilliseconds),
+    ));
+    for (final unit in SizeUnit.values) {
+      exp.addOperator(OperatorSuffixImpl(
+        unit.name,
+        62,
+        false,
+        fEval: (d) => d * Decimal.fromInt(unit.getScale()),
+      ));
+    }
   }
 }
 
@@ -113,6 +164,7 @@ class FilterCubit extends Cubit<FilterState> {
     VaultFile file,
     VaultOpen vaultOpen,
   ) async {
+    // Collect each tag on this file with its tag type from the vault
     final tagTypePairs = file.tags.values.entries.map(
       (entry) => TagTypeValuePair(
         tagType: vaultOpen.vault.tagTypes[entry.key]!,
@@ -120,6 +172,7 @@ class FilterCubit extends Cubit<FilterState> {
       ),
     );
 
+    // Filter out hidden tags unless they any were explicitly searched for
     final hiddenTags = tagTypePairs.where((pair) => pair.tagType.isHidden);
     final filteredForHidden = hiddenTags.any(
       (pair) => filterTerms.any(
@@ -128,73 +181,60 @@ class FilterCubit extends Cubit<FilterState> {
     );
     if (hiddenTags.isNotEmpty && !filteredForHidden) return false;
 
+    // Collect a future for each search term
     final matches = await Future.wait(
       filterTerms.map(
         (term) => term.matches(tagTypePairs, vaultOpen.root, file.path),
       ),
     );
+
+    // This file matches the query if every search term returns true
     return matches.every((b) => b);
   }
 }
 
 extension on FilterTerm {
-  /// To be used from an "every" context
+  /// Returns false only if the term doesn't match the file. Otherwise, assumes
+  /// that the term is malformed and returns true. This enables this function to
+  /// be used in an 'every' context, only filtering out files that are
+  /// definitely not a match, but keeping files that are unsure if it's a match.
   Future<bool> matches(
     Iterable<TagTypeValuePair> tagTypePairs,
     Directory root,
     String filePath,
   ) async {
     final fullPath = path.join(root.path, filePath);
-    if (isMeta) {
-      String lhs = '';
-      String rhs = '';
-      if (term == 'tags') {
-        lhs = '${tagTypePairs.length}';
-        rhs = param?.isNotEmpty == true ? param! : '>0';
-      }
-      if (['created', 'modified'].contains(term)) {
-        final stat = await FileStat.stat(fullPath);
-        if (term == 'created') {
-          lhs = '${stat.changed.millisecondsSinceEpoch}';
-        } else if (term == 'modified') {
-          lhs = '${stat.modified.millisecondsSinceEpoch}';
-        }
-        rhs = param?.isNotEmpty == true ? param! : '>0';
-      }
-      if (term == 'size') {
-        final stat = await FileStat.stat(fullPath);
-        if (param == null) return true;
-        if (param!.isEmpty) return true;
-        lhs = '${stat.size}';
-        rhs = param!;
-      }
-      // IDK if this should return false or true. Ideally there would be some
-      // feedback to the user that they've used an invalid meta term.
-      if (lhs.isEmpty) return true;
+    final expressionBuilder = FilterExpressionBuilder();
+    if (termType == TermType.meta) {
+      final metaTerm = metaTermNameMap[term];
 
-      var exp = Expression('$lhs$rhs');
-      // Ugh, the way the expression lib works is dumb
-      addCustom(exp);
+      // TODO: Notify the user about using an invalid meta tag name
+      if (metaTerm == null) return true;
 
-      try {
-        if (!exp.isBoolean()) exp = Expression("$lhs=$rhs");
-      } on ExpressionException {
-        return false;
-      }
-      // Have to add the custom expressions every time a new instance is created
-      // I feel like it should be some static class with all the defaults,
-      // rather than stuck to the instance.
-      addCustom(exp);
-
-      try {
-        return exp.eval().toString() == '1';
-      } on ExpressionException catch (e) {
-        logger.e(e);
-        return false;
+      switch (metaTerm) {
+        case MetaTerm.tags:
+          expressionBuilder.lhs = '${tagTypePairs.length}';
+          expressionBuilder.rhs = param?.isNotEmpty == true ? param! : '>0';
+          break;
+        case MetaTerm.modified:
+        case MetaTerm.created:
+          final stat = await FileStat.stat(fullPath);
+          final date =
+              metaTerm == MetaTerm.modified ? stat.modified : stat.changed;
+          expressionBuilder.lhs = '${date.millisecondsSinceEpoch}';
+          expressionBuilder.rhs = param?.isNotEmpty == true ? param! : '>0';
+          break;
+        case MetaTerm.size:
+          final stat = await FileStat.stat(fullPath);
+          if (param == null) return true;
+          if (param!.isEmpty) return true;
+          expressionBuilder.lhs = '${stat.size}';
+          expressionBuilder.rhs = param!;
+          break;
       }
     }
 
-    if (isPath) {
+    if (termType == TermType.path) {
       final parts = path.split(path.dirname(filePath));
       if (isPositive) return parts.contains(term);
       return !parts.contains(term);
@@ -206,61 +246,42 @@ extension on FilterTerm {
       return term != ext;
     }
 
-    // Not a meta tag, see if it matches a file tag
-    final matchedPair = tagTypePairs.firstWhereOrNull(
-      (typeValuePair) => typeValuePair.tagType.name.toLowerCase() == term,
-    );
+    if (termType == TermType.tag) {
+      // Not a meta tag, see if it matches a file tag
+      final matchedPair = tagTypePairs.firstWhereOrNull(
+        (typeValuePair) => typeValuePair.tagType.name.toLowerCase() == term,
+      );
 
-    if (matchedPair == null && isPositive) return false;
-    if (matchedPair != null && isNegative) return false;
-    if (isNegative) return true;
+      if (matchedPair == null && isPositive) return false;
+      if (matchedPair != null && isNegative) return false;
+      if (isNegative) return true;
 
-    // Being here means we have a nameMatch and we're positive
+      // Being here means we have a nameMatch and we're positive
 
-    // Flags are always matches
-    if (matchedPair!.tagType.isFlag) return true;
+      // Flags are always matches
+      if (matchedPair!.tagType.isFlag) return true;
 
-    // If the param is null or empty, it's a match
-    if (param == null || param!.isEmpty) return true;
+      // If the param is null or empty, it's a match
+      if (param == null || param!.isEmpty) return true;
 
-    // Check the param
-    var tagValue = matchedPair.tagValue!;
-    if (tagValue.whichValue() == TagValue_Value.notSet) {
-      tagValue = matchedPair.tagType.defaultValue;
+      // Check the param
+      var tagValue = matchedPair.tagValue!;
+      if (tagValue.whichValue() == TagValue_Value.notSet) {
+        tagValue = matchedPair.tagType.defaultValue;
+      }
+
+      expressionBuilder.lhs = tagValue.asStringValue();
+      expressionBuilder.rhs = '$param';
     }
-    final valueString = tagValue.asStringValue();
-    var exp = Expression('$valueString$param');
+
+    final expression = expressionBuilder.build();
+    if (expression == null) return true;
 
     try {
-      if (!exp.isBoolean()) exp = Expression('$valueString=$param');
-      return exp.eval().toString() == '1';
-    } on ExpressionException {
+      return expression.eval().toString() == '1';
+    } on ExpressionException catch (e) {
+      logger.e(e);
       return false;
-    } on RangeError {
-      return false;
-    }
-  }
-
-  void addCustom(Expression exp) {
-    exp.addFunc(FunctionImpl(
-      'NOW',
-      0,
-      fEval: (params) => Decimal.fromInt(DateTime.now().millisecondsSinceEpoch),
-    ));
-    exp.addFunc(FunctionImpl(
-      'DAYS',
-      1,
-      fEval: (params) => Decimal.fromInt(Duration(
-        days: params.first.toBigInt().toInt(),
-      ).inMilliseconds),
-    ));
-    for (final unit in SizeUnit.values) {
-      exp.addOperator(OperatorSuffixImpl(
-        unit.name,
-        62,
-        false,
-        fEval: (d) => d * Decimal.fromInt(unit.getScale()),
-      ));
     }
   }
 }

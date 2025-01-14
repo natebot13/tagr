@@ -30,7 +30,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows, linux, mac, android, ios]
+        # TODO: Add back ios when I feel like fixing xcode signing
+        platform: [windows, linux, mac, android]
         include:
           - platform: windows
             os: windows-latest
@@ -40,8 +41,6 @@ jobs:
             os: macos-latest
           - platform: android
             os: ubuntu-latest
-          - platform: ios
-            os: macos-latest
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -52,7 +51,7 @@ jobs:
       # Set up the machines
 
       - name: Install Linux Packages
-        if: matrix.platform == 'linux'
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get install ninja-build libgtk-3-dev
 
       - uses: actions/setup-java@v1
