@@ -117,7 +117,7 @@ jobs:
         with:
           type: zip
           filename: tagr-macos-${{github.ref_name}}.app.zip
-          directory: build/macos/Build/Products/Release/tagr.app
+          directory: build/macos/Build/Products/Release
       
       
       # Release builds
@@ -144,7 +144,7 @@ jobs:
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: build/macos/Build/Products/Release/tagr.app/tagr-macos-${{github.ref_name}}.app.zip
+          artifacts: build/macos/Build/Products/Release/tagr-macos-${{github.ref_name}}.app.zip
       
       - name: Release Android
         if: matrix.platform == 'android'
