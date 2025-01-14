@@ -109,7 +109,7 @@ class PreviewImage extends StatelessWidget {
     if (resize != null) {
       provider = ResizeImage.resizeIfNeeded(resize, null, provider);
     }
-    return PreviewImage(provider: provider, fit: fit);
+    return PreviewImage(id: id, provider: provider, fit: fit);
   }
 }
 

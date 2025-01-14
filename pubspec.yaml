@@ -13,7 +13,6 @@ dependencies:
   flutter_bloc:
   meta:
   file_picker: ^8.0.6
-  filesystem_picker: ^4.1.0
   mime:
   protobuf: 
   path:

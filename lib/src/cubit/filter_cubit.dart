@@ -82,8 +82,7 @@ class FilterExpressionBuilder {
     try {
       if (!expression.isBoolean()) return Expression('$lhs$defaultOp$rhs');
       return expression;
-    } on ExpressionException catch (e) {
-      logger.e(e);
+    } on ExpressionException {
       return null;
     }
   }
@@ -279,8 +278,7 @@ extension on FilterTerm {
 
     try {
       return expression.eval().toString() == '1';
-    } on ExpressionException catch (e) {
-      logger.e(e);
+    } on ExpressionException {
       return false;
     }
   }

@@ -37,10 +37,12 @@ class VaultCubit extends Cubit<VaultState> {
     // Valid path checking
     if (selectedPath == null) return;
 
-    final storagePerms = await Permission.manageExternalStorage.request();
-    if (storagePerms.isDenied) {
-      emit(VaultLoadFailure('Storage permission is denied'));
-      return;
+    if (isMobile()) {
+      final storagePerms = await Permission.manageExternalStorage.request();
+      if (storagePerms.isDenied) {
+        emit(VaultLoadFailure('Storage permission is denied'));
+        return;
+      }
     }
 
     if (selectedPath == '/' || selectedPath == 'C:\\') {

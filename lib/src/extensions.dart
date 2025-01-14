@@ -21,11 +21,11 @@ extension IterableExtensions<T> on Iterable<T> {
   }
 }
 
-isDesktop() {
+bool isDesktop() {
   return Platform.isLinux || Platform.isMacOS || Platform.isWindows;
 }
 
-isMobile() {
+bool isMobile() {
   return Platform.isAndroid || Platform.isIOS;
 }
 
