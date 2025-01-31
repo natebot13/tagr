@@ -5,6 +5,7 @@ import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
+import 'package:tagr/src/repository/vault_repository.dart';
 import 'package:tagr/src/vault_widget/desktop_vault_widget.dart';
 import 'package:tagr/src/vault_widget/mobile_vault_widget.dart';
 
@@ -23,7 +24,9 @@ class VaultWidget extends StatelessWidget {
     // Provide SelectionCubit and FilterCubit
     return MultiBlocProvider(
         providers: [
-          BlocProvider(create: (context) => SelectionCubit()),
+          BlocProvider(
+              create: (context) =>
+                  SelectionCubit(context.read<VaultRepository>())),
           BlocProvider(
             create: (context) =>
                 FilterCubit()..filter('', momentaryStateAccess),

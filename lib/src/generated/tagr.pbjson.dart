@@ -38,11 +38,12 @@ const VaultFile$json = const {
     const {'1': 'path', '3': 1, '4': 1, '5': 9, '10': 'path'},
     const {'1': 'tags', '3': 2, '4': 1, '5': 11, '6': '.MapValue', '10': 'tags'},
     const {'1': 'children', '3': 3, '4': 3, '5': 9, '10': 'children'},
+    const {'1': 'missing', '3': 4, '4': 1, '5': 8, '10': 'missing'},
   ],
 };
 
 /// Descriptor for `VaultFile`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List vaultFileDescriptor = $convert.base64Decode('CglWYXVsdEZpbGUSEgoEcGF0aBgBIAEoCVIEcGF0aBIdCgR0YWdzGAIgASgLMgkuTWFwVmFsdWVSBHRhZ3MSGgoIY2hpbGRyZW4YAyADKAlSCGNoaWxkcmVu');
+final $typed_data.Uint8List vaultFileDescriptor = $convert.base64Decode('CglWYXVsdEZpbGUSEgoEcGF0aBgBIAEoCVIEcGF0aBIdCgR0YWdzGAIgASgLMgkuTWFwVmFsdWVSBHRhZ3MSGgoIY2hpbGRyZW4YAyADKAlSCGNoaWxkcmVuEhgKB21pc3NpbmcYBCABKAhSB21pc3Npbmc=');
 @$core.Deprecated('Use tagTypeDescriptor instead')
 const TagType$json = const {
   '1': 'TagType',

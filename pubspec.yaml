@@ -34,6 +34,12 @@ dependencies:
   pdfrx: ^1.0.94
   flutter_svg: ^2.0.17
   vector_graphics: ^1.1.15
+  media_kit: ^1.1.5
+  media_kit_video: ^1.2.5
+  media_kit_libs_video: ^1.0.5
+  media_kit_libs_audio: ^1.0.5
+  flutter_markdown: ^0.7.6
+  syntax_highlight: ^0.4.0
 
 
 dev_dependencies:

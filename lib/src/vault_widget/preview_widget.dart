@@ -58,7 +58,7 @@ class _PreviewPage extends StatelessWidget {
                     maxHeight: (MediaQuery.of(context).size.height * .8) -
                         MediaQuery.of(context).viewInsets.bottom,
                   ),
-                  child: previewWidget(vaultOpen.root, file),
+                  child: previewWidget(vaultOpen, file),
                 ),
               ),
             ),
@@ -73,11 +73,9 @@ class _PreviewPage extends StatelessWidget {
 }
 
 class PreviewImage extends StatelessWidget {
-  final String? id;
   final ImageProvider provider;
   final BoxFit fit;
   PreviewImage({
-    this.id,
     required ImageProvider provider,
     super.key,
     this.fit = BoxFit.contain,
@@ -88,28 +86,24 @@ class PreviewImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
-      tag: id ?? 'none',
-      child: FadeInImage(
-        placeholder: MemoryImage(kTransparentImage),
-        fadeInDuration: const Duration(milliseconds: 200),
-        image: provider,
-        fit: fit,
-      ),
+    return FadeInImage(
+      placeholder: MemoryImage(kTransparentImage),
+      fadeInDuration: const Duration(milliseconds: 200),
+      image: provider,
+      fit: fit,
     );
   }
 
   factory PreviewImage.fromPath(
-    Directory root,
-    String id, {
+    String path, {
     int? resize,
     BoxFit fit = BoxFit.contain,
   }) {
-    ImageProvider provider = FileImage(File(path.join(root.path, id)));
+    ImageProvider provider = FileImage(File(path));
     if (resize != null) {
       provider = ResizeImage.resizeIfNeeded(resize, null, provider);
     }
-    return PreviewImage(id: id, provider: provider, fit: fit);
+    return PreviewImage(provider: provider, fit: fit);
   }
 }
 

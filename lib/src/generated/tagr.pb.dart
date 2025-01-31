@@ -77,6 +77,7 @@ class VaultFile extends $pb.GeneratedMessage {
     ..aOS(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'path')
     ..aOM<MapValue>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'tags', subBuilder: MapValue.create)
     ..pPS(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'children')
+    ..aOB(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'missing')
     ..hasRequiredFields = false
   ;
 
@@ -85,6 +86,7 @@ class VaultFile extends $pb.GeneratedMessage {
     $core.String? path,
     MapValue? tags,
     $core.Iterable<$core.String>? children,
+    $core.bool? missing,
   }) {
     final _result = create();
     if (path != null) {
@@ -95,6 +97,9 @@ class VaultFile extends $pb.GeneratedMessage {
     }
     if (children != null) {
       _result.children.addAll(children);
+    }
+    if (missing != null) {
+      _result.missing = missing;
     }
     return _result;
   }
@@ -141,6 +146,15 @@ class VaultFile extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(3)
   $core.List<$core.String> get children => $_getList(2);
+
+  @$pb.TagNumber(4)
+  $core.bool get missing => $_getBF(3);
+  @$pb.TagNumber(4)
+  set missing($core.bool v) { $_setBool(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasMissing() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearMissing() => clearField(4);
 }
 
 enum TagType_Subtype {

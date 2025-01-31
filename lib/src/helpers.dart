@@ -4,13 +4,18 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart' as mime;
 import 'package:path/path.dart' as path;
+import 'package:pdfrx/pdfrx.dart';
+import 'package:syntax_highlight/syntax_highlight.dart';
 import 'package:tagr/src/constants.dart';
+import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/vault_widget/preview_widget.dart';
+import 'package:tagr/src/widgets/video.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:vector_graphics/vector_graphics.dart';
 
@@ -19,9 +24,13 @@ final logger = Logger();
 enum FileType {
   unknown,
   image,
+  svg,
   text,
+  markdown,
   code,
   pdf,
+  video,
+  audio,
 }
 
 // cSpell:disable
@@ -30,69 +39,20 @@ final _supportedMimeTypes = <String, FileType>{
   'image/avif': FileType.image,
   'image/avif-sequence': FileType.image,
   'image/bmp': FileType.image,
-  'image/cgm': FileType.image,
-  'image/g3fax': FileType.image,
   'image/gif': FileType.image,
   'image/heic': FileType.image,
-  'image/ief': FileType.image,
   'image/jpeg': FileType.image,
   'image/pjpeg': FileType.image,
   'image/png': FileType.image,
-  'image/prs.btif': FileType.image,
-  'image/svg+xml': FileType.image,
+  'image/svg+xml': FileType.svg,
   'image/tiff': FileType.image,
-  'image/vnd.adobe.photoshop': FileType.image,
-  'image/vnd.djvu': FileType.image,
-  'image/vnd.dwg': FileType.image,
-  'image/vnd.dxf': FileType.image,
-  'image/vnd.fastbidsheet': FileType.image,
-  'image/vnd.fpx': FileType.image,
-  'image/vnd.fst': FileType.image,
-  'image/vnd.fujixerox.edmics-mmr': FileType.image,
-  'image/vnd.fujixerox.edmics-rlc': FileType.image,
-  'image/vnd.ms-modi': FileType.image,
-  'image/vnd.net-fpx': FileType.image,
-  'image/vnd.wap.wbmp': FileType.image,
-  'image/vnd.xiff': FileType.image,
   'image/webp': FileType.image,
-  'image/x-adobe-dng': FileType.image,
-  'image/x-canon-cr2': FileType.image,
-  'image/x-canon-crw': FileType.image,
-  'image/x-cmu-raster': FileType.image,
-  'image/x-cmx': FileType.image,
-  'image/x-epson-erf': FileType.image,
-  'image/x-freehand': FileType.image,
-  'image/x-fuji-raf': FileType.image,
-  'image/x-icns': FileType.image,
-  'image/x-icon': FileType.image,
-  'image/x-kodak-dcr': FileType.image,
-  'image/x-kodak-k25': FileType.image,
-  'image/x-kodak-kdc': FileType.image,
-  'image/x-minolta-mrw': FileType.image,
-  'image/x-nikon-nef': FileType.image,
-  'image/x-olympus-orf': FileType.image,
-  'image/x-panasonic-raw': FileType.image,
-  'image/x-pcx': FileType.image,
-  'image/x-pentax-pef': FileType.image,
-  'image/x-pict': FileType.image,
-  'image/x-portable-anymap': FileType.image,
-  'image/x-portable-bitmap': FileType.image,
-  'image/x-portable-graymap': FileType.image,
-  'image/x-portable-pixmap': FileType.image,
-  'image/x-rgb': FileType.image,
-  'image/x-sigma-x3f': FileType.image,
-  'image/x-sony-arw': FileType.image,
-  'image/x-sony-sr2': FileType.image,
-  'image/x-sony-srf': FileType.image,
-  'image/x-xbitmap': FileType.image,
-  'image/x-xpixmap': FileType.image,
-  'image/x-xwindowdump': FileType.image,
   'text/calendar': FileType.text,
   'text/css': FileType.code,
   'text/csv': FileType.text,
   'text/html': FileType.code,
   'text/javascript': FileType.code,
-  'text/markdown': FileType.text,
+  'text/markdown': FileType.markdown,
   'text/mathml': FileType.text,
   'text/plain': FileType.text,
   'text/prs.lines.tag': FileType.text,
@@ -121,10 +81,57 @@ final _supportedMimeTypes = <String, FileType>{
   'text/x-java-source': FileType.code,
   'text/x-pascal': FileType.code,
   'text/x-python': FileType.code,
+  'text/x-sh': FileType.code,
   'text/x-setext': FileType.text,
   'text/x-uuencode': FileType.text,
   'text/x-vcalendar': FileType.text,
   'text/x-vcard': FileType.text,
+  'video/3gpp': FileType.video,
+  'video/3gpp2': FileType.video,
+  'video/3gpp-tt': FileType.video,
+  'video/AV1': FileType.video,
+  'video/BMPEG': FileType.video,
+  'video/BT656': FileType.video,
+  'video/CelB': FileType.video,
+  'video/DV': FileType.video,
+  'video/encaprtp': FileType.video,
+  'video/evc': FileType.video,
+  'video/example': FileType.video,
+  'video/FFV1': FileType.video,
+  'video/flexfec': FileType.video,
+  'video/H261': FileType.video,
+  'video/H263': FileType.video,
+  'video/H263-1998': FileType.video,
+  'video/H263-2000': FileType.video,
+  'video/H264': FileType.video,
+  'video/H264-RCDO': FileType.video,
+  'video/H264-SVC': FileType.video,
+  'video/H265': FileType.video,
+  'video/H266': FileType.video,
+  'video/JPEG': FileType.video,
+  'video/jpeg2000': FileType.video,
+  'video/jxsv': FileType.video,
+  'video/matroska': FileType.video,
+  'video/matroska-3d': FileType.video,
+  'video/mj2': FileType.video,
+  'video/MP1S': FileType.video,
+  'video/MP2P': FileType.video,
+  'video/MP2T': FileType.video,
+  'video/mp4': FileType.video,
+  'video/MP4V-ES': FileType.video,
+  'video/MPV': FileType.video,
+  'video/mpeg': FileType.video,
+  'video/mpeg4-generic': FileType.video,
+  'video/nv': FileType.video,
+  'video/ogg': FileType.video,
+  'video/parityfec': FileType.video,
+  'video/pointer': FileType.video,
+  'video/quicktime': FileType.video,
+  'video/raptorfec': FileType.video,
+  'video/raw': FileType.video,
+  'video/VP8': FileType.video,
+  'video/VP9': FileType.video,
+  'video/webm': FileType.video,
 };
 // cSpell:enable
 
@@ -150,38 +157,152 @@ Future<String> pickSvgVecAsset(String? id) async {
   return 'assets/icons/$iconPack/$ext.svg.vec';
 }
 
-FileType getFileType(Directory root, String? id) {
-  if (id == null) return FileType.unknown;
+String? getMimeType(Directory root, String? id) {
+  if (id == null) return null;
   final filePath = path.join(root.path, id);
-  final mimeType = mime.lookupMimeType(filePath);
+  return mime.lookupMimeType(filePath);
+}
+
+FileType getFileType(String? mimeType) {
   if (mimeType == null) return FileType.unknown;
   return _supportedMimeTypes[mimeType] ?? FileType.unknown;
 }
 
 Widget previewWidget(
-  Directory root,
+  VaultOpen vaultState,
   String? id, {
   int? resize,
   BoxFit fit = BoxFit.contain,
+  bool preview = false,
 }) {
-  final fileType = getFileType(root, id);
-  return switch (fileType) {
-    FileType.image => PreviewImage.fromPath(
-        root,
-        id!,
-        resize: resize,
-        fit: fit,
-      ),
-    _ => FutureBuilder(
-        future: pickSvgVecAsset(id),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return Image.memory(kTransparentImage);
-          return SvgPicture(
-            AssetBytesLoader(snapshot.data!),
-            width: resize?.toDouble(),
-          );
-        }),
-  };
+  final fullPath = path.join(vaultState.root.path, id);
+  return Hero(
+    tag: id ?? 'none',
+    child: Builder(builder: (context) {
+      final mimeType = getMimeType(vaultState.root, id);
+      final fileType = getFileType(mimeType);
+      if (vaultState.isMissing(id)) {
+        return FileIcon(id: id, resize: resize, missing: true);
+      }
+
+      return switch (fileType) {
+        FileType.image => PreviewImage.fromPath(
+            fullPath,
+            resize: resize,
+            fit: fit,
+          ),
+        FileType.markdown || FileType.text || FileType.code => TextFilePreview(
+            fileType: fileType,
+            path: fullPath,
+            preview: preview,
+          ),
+        FileType.pdf => PdfViewer.file(
+            path.join(vaultState.root.path, id),
+          ),
+        FileType.video =>
+          MyScreen(key: ValueKey(id), path: fullPath, preview: preview),
+        _ => FileIcon(id: id, resize: resize),
+      };
+    }),
+  );
+}
+
+class TextFilePreview extends StatelessWidget {
+  final FileType fileType;
+  final String path;
+  final bool preview;
+
+  const TextFilePreview({
+    super.key,
+    required this.fileType,
+    required this.path,
+    this.preview = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+        future: getText(),
+        builder: (context, AsyncSnapshot<(String, bool)> snapshot) {
+          final (text, truncated) = snapshot.data ?? ('Loading...', false);
+          return switch (fileType) {
+            FileType.markdown => Markdown(
+                data: text + (truncated ? '...' : ''),
+                selectable: !preview,
+              ),
+            FileType.text => SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(text),
+                ),
+              ),
+            _ => throw ArgumentError.value(fileType),
+          };
+        });
+  }
+
+  Future<(String, bool)> getText() async {
+    final file = File(path);
+    if (preview) {
+      const previewSize = 256;
+      final openFile = await file.open();
+      final size = await file.length();
+      final truncated = size > previewSize;
+      final text = await openFile
+          .read(min(size, previewSize))
+          .then((bytes) => (utf8.decoder.convert(bytes), truncated));
+      await openFile.close();
+      return text;
+    } else {
+      return (await file.readAsString(), false);
+    }
+  }
+}
+
+class FileIcon extends StatelessWidget {
+  final String? id;
+  final int? resize;
+  final bool missing;
+  const FileIcon({
+    super.key,
+    this.id,
+    this.resize,
+    this.missing = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: pickSvgVecAsset(id),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return Image.memory(kTransparentImage);
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture(
+              AssetBytesLoader(snapshot.data!),
+              width: resize?.toDouble(),
+            ),
+            if (missing)
+              FittedBox(
+                child: Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.rotationZ(pi / 8),
+                  child: const Text(
+                    "Missing",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 46,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              )
+          ],
+        );
+      },
+    );
+  }
 }
 
 enum SizeUnit {

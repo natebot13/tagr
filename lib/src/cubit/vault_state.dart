@@ -48,23 +48,27 @@ final class VaultOpen extends VaultState {
             .map((id, type) => MapEntry(type.name.toLowerCase(), id));
 
   Map<int, TagTypeValuePair> tags(Set<String> ids) {
-    final entries = ids.expand(
-      (id) => vault.files[fileMap[id]!].tags.values.entries.map(
-        (entry) {
-          final tagType = vault.tagTypes[entry.key]!;
+    final entries = ids.expand<MapEntry<int, TagTypeValuePair>>(
+      (id) {
+        final vaultFile = vault.getVaultFile(id, this);
+        if (vaultFile == null) return [];
+        return vaultFile.tags.values.entries.map(
+          (entry) {
+            final tagType = vault.tagTypes[entry.key]!;
 
-          // If the tag value type doesn't match the default value type, make
-          // the tag's value unset.
-          var tagValue = entry.value;
-          if (tagValue.whichValue() != tagType.defaultValue.whichValue()) {
-            tagValue = TagValue();
-          }
-          return MapEntry(
-            entry.key,
-            TagTypeValuePair(tagType: tagType, tagValue: tagValue),
-          );
-        },
-      ),
+            // If the tag value type doesn't match the default value type, make
+            // the tag's value unset.
+            var tagValue = entry.value;
+            if (tagValue.whichValue() != tagType.defaultValue.whichValue()) {
+              tagValue = TagValue();
+            }
+            return MapEntry(
+              entry.key,
+              TagTypeValuePair(tagType: tagType, tagValue: tagValue),
+            );
+          },
+        );
+      },
     );
     if (ids.length == 1) return Map.fromEntries(entries);
 
@@ -87,6 +91,11 @@ final class VaultOpen extends VaultState {
           _mergeValues(result[entry.key], entry.value.withPartial());
     }
     return result;
+  }
+
+  bool isMissing(String? id) {
+    if (id == null) return false;
+    return vault.getVaultFile(id, this)?.missing ?? false;
   }
 
   /// Should only be called on two values with the same type. If they aren't the

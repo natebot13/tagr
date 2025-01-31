@@ -17,9 +17,7 @@ part 'vault_state.dart';
 class VaultCubit extends Cubit<VaultState> {
   final VaultRepository _repository;
   StreamSubscription<VaultUpdate>? subscription;
-  VaultCubit(VaultRepository repository)
-      : _repository = repository,
-        super(VaultClosed()) {
+  VaultCubit(this._repository) : super(VaultClosed()) {
     subscription = _repository.vault.listen((vaultUpdate) {
       emit(VaultOpen(vaultUpdate.root, vaultUpdate.vault));
     });
@@ -82,8 +80,8 @@ class VaultCubit extends Cubit<VaultState> {
     _repository.loadVault(Directory(path));
   }
 
-  void refreshFilesInVault() {
-    _updateVault((state, vault) async {
+  Future<bool> refreshFilesInVault() async {
+    return await _updateVault((state, vault) async {
       await _repository.refreshFiles(state.root, vault);
       return true;
     });
@@ -116,19 +114,6 @@ class VaultCubit extends Cubit<VaultState> {
       return await fn(state as VaultOpen);
     }
     return null;
-  }
-
-  VaultFile? _getVaultFile(String id, VaultOpen state, Vault vault) {
-    final index = state.fileMap[id];
-    if (index == null) {
-      logger.e('fileMap missing id: $id');
-      return null;
-    }
-    if (index >= vault.files.length) {
-      logger.e('Out of bounds vault file index: $index');
-      return null;
-    }
-    return vault.files[index];
   }
 
   Future<void> updateTag(
@@ -179,7 +164,7 @@ class VaultCubit extends Cubit<VaultState> {
     bool changed = false;
     for (final fileId in fileIds) {
       var newValue = value;
-      final vaultFile = _getVaultFile(fileId, state, vault);
+      final vaultFile = vault.getVaultFile(fileId, state);
       if (vaultFile == null) return false;
       if (!vaultFile.hasTags()) vaultFile.tags = MapValue();
       final currentValue = vaultFile.tags.values[tagTypeId];
@@ -206,7 +191,7 @@ class VaultCubit extends Cubit<VaultState> {
     _updateVault((state, vault) {
       bool changed = false;
       for (final fileId in from) {
-        final vaultFile = _getVaultFile(fileId, state, vault);
+        final vaultFile = vault.getVaultFile(fileId, state);
         if (vaultFile == null) return false;
         if (!vaultFile.hasTags()) return false;
         if (vaultFile.tags.values.remove(tagId) != null) {

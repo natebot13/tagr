@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,8 +11,8 @@ import 'package:tagr/src/vault_widget/preview_widget.dart';
 
 class FileGridItem extends StatelessWidget {
   final VaultFile file;
-  final Directory root;
-  const FileGridItem(this.root, this.file, {super.key});
+  final VaultOpen vaultOpen;
+  const FileGridItem(this.vaultOpen, this.file, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +63,11 @@ class FileGridItem extends StatelessWidget {
                     borderRadius:
                         BorderRadius.all(Radius.circular(selected ? 16 : 0))),
                 child: previewWidget(
-                  root,
+                  vaultOpen,
                   file.path,
                   resize: 300,
                   fit: BoxFit.cover,
+                  preview: true,
                 ),
               ),
             ),

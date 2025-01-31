@@ -15,6 +15,7 @@ message VaultFile {
   // The keys should be ids from Vault.tagTypes
   MapValue tags = 2;
   repeated string children = 3;
+  bool missing = 4;
 }
 
 message TagType {

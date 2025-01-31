@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
+import 'package:tagr/src/helpers.dart';
 
 extension CustomUpdation on Map<dynamic, int> {
   int increment(dynamic key) {
@@ -50,5 +52,17 @@ extension StringHelpers on String {
     final from = length - n;
     if (from.isNegative) return this;
     return substring(from);
+  }
+}
+
+extension Getters on Vault {
+  VaultFile? getVaultFile(String id, VaultOpen state) {
+    final index = state.fileMap[id];
+    if (index == null) return null;
+    if (index >= files.length) {
+      logger.e('Out of bounds vault file index: $index');
+      return null;
+    }
+    return files[index];
   }
 }

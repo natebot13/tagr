@@ -38,7 +38,7 @@ class DesktopVaultWidget extends StatelessWidget {
                 children: [
                   // Big picture view
                   ResizableChild(
-                    child: previewWidget(vaultState.root, firstId),
+                    child: previewWidget(vaultState, firstId),
                   ),
                   // File details view
                   if (selectionState.selected.isNotEmpty)

@@ -181,7 +181,7 @@ class VaultFileSliverGrid extends StatelessWidget {
             throw StateError("Vault not open");
           }
           return FileGridItem(
-            vaultState.root,
+            vaultState,
             vaultFiles[i],
           );
         },

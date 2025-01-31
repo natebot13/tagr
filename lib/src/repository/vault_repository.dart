@@ -22,7 +22,7 @@ class VaultSaveException implements Exception {
 }
 
 class VaultRepository {
-  final _vaultController = StreamController<VaultUpdate>();
+  final _vaultController = StreamController<VaultUpdate>.broadcast();
   Stream<VaultUpdate> get vault => _vaultController.stream;
 
   Future<void> loadVault(Directory root) async {
@@ -69,6 +69,14 @@ class VaultRepository {
             ? fileMap[normalizedFilePath]!
             : VaultFile(path: normalizedFilePath),
       );
+      fileMap.remove(normalizedFilePath);
+    }
+
+    // Deal with vault files not found on disk
+    for (final file in fileMap.values) {
+      if (file.hasTags() && file.tags.values.isNotEmpty) {
+        vault.files.add(file..missing = true);
+      }
     }
   }
 
