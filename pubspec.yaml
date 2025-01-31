@@ -37,7 +37,6 @@ dependencies:
   media_kit: ^1.1.5
   media_kit_video: ^1.2.5
   media_kit_libs_video: ^1.0.5
-  media_kit_libs_audio: ^1.0.5
   flutter_markdown: ^0.7.6
   syntax_highlight: ^0.4.0
 
