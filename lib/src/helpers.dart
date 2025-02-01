@@ -2,22 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart' as mime;
 import 'package:path/path.dart' as path;
-import 'package:pdfrx/pdfrx.dart';
-import 'package:syntax_highlight/syntax_highlight.dart';
 import 'package:tagr/src/constants.dart';
-import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
-import 'package:tagr/src/vault_widget/preview_widget.dart';
-import 'package:tagr/src/widgets/video.dart';
-import 'package:transparent_image/transparent_image.dart';
-import 'package:vector_graphics/vector_graphics.dart';
 
 final logger = Logger();
 
@@ -166,143 +156,6 @@ String? getMimeType(Directory root, String? id) {
 FileType getFileType(String? mimeType) {
   if (mimeType == null) return FileType.unknown;
   return _supportedMimeTypes[mimeType] ?? FileType.unknown;
-}
-
-Widget previewWidget(
-  VaultOpen vaultState,
-  String? id, {
-  int? resize,
-  BoxFit fit = BoxFit.contain,
-  bool preview = false,
-}) {
-  final fullPath = path.join(vaultState.root.path, id);
-  return Hero(
-    tag: id ?? 'none',
-    child: Builder(builder: (context) {
-      final mimeType = getMimeType(vaultState.root, id);
-      final fileType = getFileType(mimeType);
-      if (vaultState.isMissing(id)) {
-        return FileIcon(id: id, resize: resize, missing: true);
-      }
-
-      return switch (fileType) {
-        FileType.image => PreviewImage.fromPath(
-            fullPath,
-            resize: resize,
-            fit: fit,
-          ),
-        FileType.markdown || FileType.text || FileType.code => TextFilePreview(
-            fileType: fileType,
-            path: fullPath,
-            preview: preview,
-          ),
-        FileType.pdf => PdfViewer.file(
-            path.join(vaultState.root.path, id),
-          ),
-        FileType.video =>
-          MyScreen(key: ValueKey(id), path: fullPath, preview: preview),
-        _ => FileIcon(id: id, resize: resize),
-      };
-    }),
-  );
-}
-
-class TextFilePreview extends StatelessWidget {
-  final FileType fileType;
-  final String path;
-  final bool preview;
-
-  const TextFilePreview({
-    super.key,
-    required this.fileType,
-    required this.path,
-    this.preview = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: getText(),
-        builder: (context, AsyncSnapshot<(String, bool)> snapshot) {
-          final (text, truncated) = snapshot.data ?? ('Loading...', false);
-          return switch (fileType) {
-            FileType.markdown => Markdown(
-                data: text + (truncated ? '...' : ''),
-                selectable: !preview,
-              ),
-            FileType.text => SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(text),
-                ),
-              ),
-            _ => throw ArgumentError.value(fileType),
-          };
-        });
-  }
-
-  Future<(String, bool)> getText() async {
-    final file = File(path);
-    if (preview) {
-      const previewSize = 256;
-      final openFile = await file.open();
-      final size = await file.length();
-      final truncated = size > previewSize;
-      final text = await openFile
-          .read(min(size, previewSize))
-          .then((bytes) => (utf8.decoder.convert(bytes), truncated));
-      await openFile.close();
-      return text;
-    } else {
-      return (await file.readAsString(), false);
-    }
-  }
-}
-
-class FileIcon extends StatelessWidget {
-  final String? id;
-  final int? resize;
-  final bool missing;
-  const FileIcon({
-    super.key,
-    this.id,
-    this.resize,
-    this.missing = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: pickSvgVecAsset(id),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return Image.memory(kTransparentImage);
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            SvgPicture(
-              AssetBytesLoader(snapshot.data!),
-              width: resize?.toDouble(),
-            ),
-            if (missing)
-              FittedBox(
-                child: Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.rotationZ(pi / 8),
-                  child: const Text(
-                    "Missing",
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 46,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              )
-          ],
-        );
-      },
-    );
-  }
 }
 
 enum SizeUnit {

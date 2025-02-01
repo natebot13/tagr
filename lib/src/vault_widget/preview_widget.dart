@@ -7,6 +7,7 @@ import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tagr/src/helpers.dart';
+import 'package:tagr/src/widgets/file_viewer/file_viewer.dart';
 import 'package:tagr/src/widgets/tag_value_editor.dart';
 import 'package:transparent_image/transparent_image.dart';
 
@@ -58,7 +59,7 @@ class _PreviewPage extends StatelessWidget {
                     maxHeight: (MediaQuery.of(context).size.height * .8) -
                         MediaQuery.of(context).viewInsets.bottom,
                   ),
-                  child: previewWidget(vaultOpen, file),
+                  child: FileViewer(vaultOpen: vaultOpen, id: file),
                 ),
               ),
             ),
@@ -69,41 +70,6 @@ class _PreviewPage extends StatelessWidget {
         ]),
       ),
     );
-  }
-}
-
-class PreviewImage extends StatelessWidget {
-  final ImageProvider provider;
-  final BoxFit fit;
-  PreviewImage({
-    required ImageProvider provider,
-    super.key,
-    this.fit = BoxFit.contain,
-    int? resize,
-  }) : provider = resize != null
-            ? ResizeImage.resizeIfNeeded(resize, null, provider)
-            : provider;
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeInImage(
-      placeholder: MemoryImage(kTransparentImage),
-      fadeInDuration: const Duration(milliseconds: 200),
-      image: provider,
-      fit: fit,
-    );
-  }
-
-  factory PreviewImage.fromPath(
-    String path, {
-    int? resize,
-    BoxFit fit = BoxFit.contain,
-  }) {
-    ImageProvider provider = FileImage(File(path));
-    if (resize != null) {
-      provider = ResizeImage.resizeIfNeeded(resize, null, provider);
-    }
-    return PreviewImage(provider: provider, fit: fit);
   }
 }
 

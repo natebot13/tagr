@@ -8,6 +8,7 @@ import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
 import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/vault_widget/preview_widget.dart';
+import 'package:tagr/src/widgets/file_viewer/file_viewer.dart';
 
 class FileGridItem extends StatelessWidget {
   final VaultFile file;
@@ -62,9 +63,9 @@ class FileGridItem extends StatelessWidget {
                         colors: [Colors.grey[900]!, Colors.grey[800]!]),
                     borderRadius:
                         BorderRadius.all(Radius.circular(selected ? 16 : 0))),
-                child: previewWidget(
-                  vaultOpen,
-                  file.path,
+                child: FileViewer(
+                  vaultOpen: vaultOpen,
+                  id: file.path,
                   resize: 300,
                   fit: BoxFit.cover,
                   preview: true,

@@ -8,6 +8,7 @@ import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/helpers.dart';
 import 'package:tagr/src/vault_widget/file_grid_widget.dart';
 import 'package:tagr/src/vault_widget/preview_widget.dart';
+import 'package:tagr/src/widgets/file_viewer/file_viewer.dart';
 
 class DesktopVaultWidget extends StatelessWidget {
   const DesktopVaultWidget({
@@ -38,7 +39,7 @@ class DesktopVaultWidget extends StatelessWidget {
                 children: [
                   // Big picture view
                   ResizableChild(
-                    child: previewWidget(vaultState, firstId),
+                    child: FileViewer(vaultOpen: vaultState, id: firstId),
                   ),
                   // File details view
                   if (selectionState.selected.isNotEmpty)
