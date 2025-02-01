@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:code_highlight_view/code_highlight_view.dart';
+import 'package:code_highlight_view/themes/darcula.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/flutter_highlight.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:tagr/src/helpers.dart';
+import 'package:tagr/src/widgets/conditional_parent_widget.dart';
 
 class TextFileViewer extends StatelessWidget {
   final FileType fileType;
@@ -29,13 +32,27 @@ class TextFileViewer extends StatelessWidget {
                 data: text + (truncated ? '...' : ''),
                 selectable: !preview,
               ),
-            FileType.text => SingleChildScrollView(
+            FileType.text => ConditionalParentWidget(
+                condition: !preview,
+                parentBuilder: (child) => SingleChildScrollView(child: child),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(text),
                 ),
               ),
-            FileType.code => HighlightView(text),
+            FileType.code => ConditionalParentWidget(
+                condition: !preview,
+                // parentBuilderElse: (child) => FittedBox(child: child, ),
+                parentBuilder: (child) => SingleChildScrollView(child: child),
+                child: CodeHighlightView(
+                  isSelectable: !preview,
+                  text,
+                  padding: const EdgeInsets.all(8),
+                  theme: darculaTheme,
+                  textStyle: const TextStyle(),
+                  language: getLanguage(path),
+                ),
+              ),
             _ => throw ArgumentError.value(fileType),
           };
         });

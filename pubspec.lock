@@ -153,6 +153,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.10.0"
+  code_highlight_view:
+    dependency: "direct main"
+    description:
+      name: code_highlight_view
+      sha256: e9c8c2f6169704c3bdd2c663cf95e62b35ad94ee688bb06c45b7f7843dfedbf0
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   collection:
     dependency: "direct main"
     description:
@@ -303,14 +311,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.0.0"
-  flutter_highlight:
-    dependency: "direct main"
-    description:
-      name: flutter_highlight
-      sha256: "7b96333867aa07e122e245c033b8ad622e4e3a42a1a2372cbb098a2541d8782c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -394,7 +394,7 @@ packages:
     source: hosted
     version: "6.0.0"
   highlight:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: highlight
       sha256: "5353a83ffe3e3eca7df0abfb72dcf3fa66cc56b953728e7113ad4ad88497cf21"
@@ -841,6 +841,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  quiver:
+    dependency: "direct main"
+    description:
+      name: quiver
+      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.2"
   rational:
     dependency: transitive
     description:

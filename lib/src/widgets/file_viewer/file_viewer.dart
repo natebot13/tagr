@@ -29,8 +29,7 @@ class FileViewer extends StatelessWidget {
     return Hero(
       tag: id ?? 'none',
       child: Builder(builder: (context) {
-        final mimeType = getMimeType(vaultOpen.root, id);
-        final fileType = getFileType(mimeType);
+        final fileType = getFileType(id);
         if (vaultOpen.isMissing(id)) {
           return FileIconViewer(id: id, resize: resize, missing: true);
         }
