@@ -17,8 +17,9 @@ class VideoFileViewerState extends State<VideoFileViewer> {
   @override
   void initState() {
     super.initState();
-    player.open(Media(widget.path), play: false);
+    player.open(Media(widget.path));
     player.setVolume(0);
+    player.setPlaylistMode(PlaylistMode.loop);
   }
 
   @override
@@ -30,6 +31,7 @@ class VideoFileViewerState extends State<VideoFileViewer> {
   @override
   Widget build(BuildContext context) {
     return Video(
+      wakelock: !widget.preview,
       fit: widget.preview ? BoxFit.cover : BoxFit.contain,
       controller: controller,
       controls: widget.preview ? NoVideoControls : AdaptiveVideoControls,

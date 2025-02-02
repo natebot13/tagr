@@ -41,6 +41,7 @@ dependencies:
   quiver: ^3.2.2
   highlight: ^0.7.0
   code_highlight_view: ^0.1.1
+  pretty_bytes: ^6.2.0
 
 
 dev_dependencies:

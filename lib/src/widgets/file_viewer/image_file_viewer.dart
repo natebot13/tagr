@@ -20,7 +20,7 @@ class ImageFileViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return FadeInImage(
       placeholder: MemoryImage(kTransparentImage),
-      fadeInDuration: const Duration(milliseconds: 200),
+      fadeInDuration: const Duration(milliseconds: 100),
       image: provider,
       fit: fit,
     );

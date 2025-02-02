@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
-import 'package:tagr/src/cubit/tag_filter_cubit.dart';
-import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/vault_widget/file_grid_widget.dart';
-import 'package:tagr/src/vault_widget/preview_widget.dart';
+import 'package:tagr/src/vault_widget/file_info_sliver.dart';
 
 class MobileVaultWidget extends StatelessWidget {
   const MobileVaultWidget({
@@ -28,12 +26,6 @@ class MobileVaultWidget extends StatelessWidget {
                 minChildSize: 0.15,
                 initialChildSize: 0.15,
                 builder: (context, controller) {
-                  final selectionState = context.watch<SelectionCubit>().state;
-                  final vaultState = context.watch<VaultCubit>().state;
-                  if (vaultState is! VaultOpen) {
-                    throw StateError("Requires an open vault");
-                  }
-                  final tags = vaultState.tags(selectionState.selected);
                   const borderRadius = BorderRadius.vertical(
                     top: Radius.circular(16),
                   );
@@ -42,14 +34,9 @@ class MobileVaultWidget extends StatelessWidget {
                       borderRadius: borderRadius,
                       color: Theme.of(context).scaffoldBackgroundColor,
                     ),
-                    child: BlocProvider(
-                      create: (context) => TagFilterCubit(),
-                      child: MobileTagScrollView(
-                        borderRadius: borderRadius,
-                        tags: tags,
-                        selectionState: selectionState,
-                        controller: controller,
-                      ),
+                    child: MobileFileInfoScrollView(
+                      borderRadius: borderRadius,
+                      controller: controller,
                     ),
                   );
                 },
@@ -61,18 +48,14 @@ class MobileVaultWidget extends StatelessWidget {
   }
 }
 
-class MobileTagScrollView extends StatelessWidget {
-  const MobileTagScrollView({
+class MobileFileInfoScrollView extends StatelessWidget {
+  const MobileFileInfoScrollView({
     super.key,
     required this.borderRadius,
-    required this.tags,
-    required this.selectionState,
     required this.controller,
   });
 
   final BorderRadius borderRadius;
-  final Map<int, TagTypeValuePair> tags;
-  final SelectionState selectionState;
   final ScrollController controller;
 
   @override
@@ -103,33 +86,7 @@ class MobileTagScrollView extends StatelessWidget {
             ),
           ),
         ),
-        PreviewTagsSliver(tags, selectionState.selected),
-        const SliverToBoxAdapter(
-          child: Divider(),
-        ),
-        EditPropertiesButtonSliver(selectionState.selected),
-        TagsSearch(selectionState.selected),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          sliver: SliverList.list(children: [
-            Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.only(bottom: 8),
-              child: const Text(
-                'Selected Files',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8.0,
-              ),
-              child: SelectableText(
-                selectionState.selected.join('\n'),
-              ),
-            ),
-          ]),
-        ),
+        const FileInfoSliver()
       ],
     );
   }
