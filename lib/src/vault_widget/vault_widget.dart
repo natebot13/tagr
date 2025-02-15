@@ -1,12 +1,10 @@
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tagr/src/cubit/filter_cubit.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
 import 'package:tagr/src/generated/tagr.pb.dart';
-import 'package:tagr/src/repository/vault_repository.dart';
 import 'package:tagr/src/vault_widget/desktop_vault_widget.dart';
 import 'package:tagr/src/vault_widget/mobile_vault_widget.dart';
 import 'package:tagr/src/vault_widget/preview_dismissible_page.dart';
@@ -18,27 +16,10 @@ class VaultWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // You're not supposed to use 'read' from build, but this is just for
-    // pre-warming the filtering cubit. I'm not relying on it for state changes.
-    final momentaryStateAccess = context.read<VaultCubit>().state;
-    if (momentaryStateAccess is! VaultOpen) throw StateError("Vault not open");
-
-    // Provide SelectionCubit and FilterCubit
-    return MultiBlocProvider(
-        providers: [
-          BlocProvider(
-              create: (context) =>
-                  SelectionCubit(context.read<VaultRepository>())),
-          BlocProvider(
-            create: (context) =>
-                FilterCubit()..filter('', momentaryStateAccess),
-          ),
-        ],
-        child: EventListeners(
-          child: isDesktop()
-              ? const DesktopVaultWidget()
-              : const MobileVaultWidget(),
-        ));
+    return EventListeners(
+      child:
+          isDesktop() ? const DesktopVaultWidget() : const MobileVaultWidget(),
+    );
   }
 }
 

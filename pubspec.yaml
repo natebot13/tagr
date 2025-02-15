@@ -16,13 +16,13 @@ dependencies:
   mime:
   protobuf: 
   path:
-  flutter_resizable_container: ^2.0.0
+  flutter_resizable_container: ^3.0.4
   logger: ^2.4.0
   grouped_list: ^6.0.0
   dart_casing: 
   collection:
   permission_handler: ^11.3.1
-  dropdown_search: ^5.0.6
+  dropdown_search: ^6.0.2
   dismissible_page: ^1.0.2
   transparent_image: 
   eval_ex:
@@ -42,12 +42,12 @@ dependencies:
   highlight: ^0.7.0
   code_highlight_view: ^0.1.1
   pretty_bytes: ^6.2.0
-
+  flutter_js: ^0.8.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^5.0.0
   protoc_builder: 
   build_runner:
 

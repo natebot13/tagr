@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tagr/src/cubit/plugin_cubit.dart';
 import 'package:tagr/src/cubit/tag_filter_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
+import 'package:tagr/src/vault_widget/tag_import_dialog.dart';
 
 class EditPropertiesButtonSliver extends StatefulWidget {
   final Set<String> fileIds;
@@ -46,7 +48,31 @@ class _EditPropertiesButtonSliverState
         padding: const EdgeInsets.all(8),
         sliver: SliverToBoxAdapter(
           child: OutlinedButton.icon(
-            label: const Text('Add Property'),
+            label: Row(
+              children: [
+                const Expanded(child: Text('Add Property')),
+                PopupMenuButton(
+                  tooltip: null,
+                  itemBuilder: (outerContext) {
+                    return [
+                      PopupMenuItem(
+                        child: const Text('Import'),
+                        onTap: () {
+                          showDialog(
+                              context: outerContext,
+                              builder: (context) {
+                                return BlocProvider.value(
+                                  value: outerContext.read<PluginCubit>(),
+                                  child: TagImportDialog(widget.fileIds),
+                                );
+                              });
+                        },
+                      ),
+                    ];
+                  },
+                )
+              ],
+            ),
             icon: const Icon(Icons.add),
             onPressed: context.read<TagFilterCubit>().search,
           ),

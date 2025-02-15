@@ -3,6 +3,7 @@
     "autofocus",
     "LTRB",
     "Multimap",
+    "Scriptable",
     "tagr"
   ],
   "java.configuration.updateBuildConfiguration": "interactive",
