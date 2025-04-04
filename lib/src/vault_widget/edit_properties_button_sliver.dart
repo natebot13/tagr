@@ -30,6 +30,7 @@ class _EditPropertiesButtonSliverState
   Widget build(BuildContext context) {
     final vaultState = context.watch<VaultCubit>().state;
     final searchState = context.watch<TagFilterCubit>().state;
+    final pluginState = context.watch<PluginCubit>().state;
     if (vaultState is! VaultOpen) throw StateError('Wrong state');
     if (searchState is FilteringTags) {
       return SliverAppBar(
@@ -51,26 +52,28 @@ class _EditPropertiesButtonSliverState
             label: Row(
               children: [
                 const Expanded(child: Text('Add Property')),
-                PopupMenuButton(
-                  tooltip: null,
-                  itemBuilder: (outerContext) {
-                    return [
-                      PopupMenuItem(
-                        child: const Text('Import'),
-                        onTap: () {
-                          showDialog(
-                              context: outerContext,
-                              builder: (context) {
-                                return BlocProvider.value(
-                                  value: outerContext.read<PluginCubit>(),
-                                  child: TagImportDialog(widget.fileIds),
-                                );
-                              });
-                        },
-                      ),
-                    ];
-                  },
-                )
+                if (pluginState is PluginsLoaded &&
+                    pluginState.plugins.values.any((p) => p.hasSearchTags()))
+                  PopupMenuButton(
+                    tooltip: null,
+                    itemBuilder: (outerContext) {
+                      return [
+                        PopupMenuItem(
+                          child: const Text('Import'),
+                          onTap: () {
+                            showDialog(
+                                context: outerContext,
+                                builder: (context) {
+                                  return BlocProvider.value(
+                                    value: outerContext.read<PluginCubit>(),
+                                    child: TagImportDialog(widget.fileIds),
+                                  );
+                                });
+                          },
+                        ),
+                      ];
+                    },
+                  )
               ],
             ),
             icon: const Icon(Icons.add),

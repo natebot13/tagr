@@ -1,6 +1,7 @@
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tagr/src/cubit/plugin_cubit.dart';
 import 'package:tagr/src/cubit/selection_cubit.dart';
 import 'package:tagr/src/cubit/vault_cubit.dart';
 import 'package:tagr/src/extensions.dart';
@@ -42,6 +43,7 @@ class EventListeners extends StatelessWidget {
                     providers: [
                       BlocProvider.value(value: context.read<VaultCubit>()),
                       BlocProvider.value(value: context.read<SelectionCubit>()),
+                      BlocProvider.value(value: context.read<PluginCubit>())
                     ],
                     child: PreviewDismissiblePage(file: state.selected.single),
                   ),

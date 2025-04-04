@@ -39,6 +39,8 @@ class _PreviewPage extends StatelessWidget {
         SliverSafeArea(
           sliver: SliverToBoxAdapter(
             child: DismissiblePage(
+              isFullScreen: false,
+              direction: DismissiblePageDismissDirection.down,
               onDismissed: Navigator.of(context).pop,
               child: ConstrainedBox(
                 constraints: BoxConstraints(

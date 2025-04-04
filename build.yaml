@@ -2,9 +2,20 @@ targets:
   $default:
     sources:
       - $package$
-      - lib/$lib$
+      - lib/**
+      - lib/plugin.dart
       - proto/**
+      - tool/**
     builders:
       protoc_builder:
         options:
           out_dir: lib/src/generated
+builders:
+  plugin_generator:
+    import: 'tool/plugin_generator.dart'
+    builder_factories: ["getBuilder"]
+    build_extensions: {".dart": [".plugin.g.part"]}
+    auto_apply: root_package
+    build_to: source
+    required_inputs:
+      - lib/plugin_template.mustache

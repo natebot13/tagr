@@ -1,0 +1,51 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:flutter_js/flutter_js.dart';
+import '{{plugin_import}}';
+
+class JavascriptPlugin extends {{plugin_class}} {
+  static const pluginSrc = 'main.js';
+
+  final JavascriptRuntime jsRuntime;
+  JavascriptPlugin._(super.name, this.jsRuntime);
+
+  static Future<JavascriptPlugin?> fromDirectory(Directory pluginDir) async {
+    final pluginName = path.basename(pluginDir.path);
+    final pluginFile = File(path.join(pluginDir.path, pluginSrc));
+    if (!await pluginFile.exists()) return null;
+    final runtime = getJavascriptRuntime();
+    runtime.evaluate(
+      await pluginFile.readAsString(),
+      sourceUrl: pluginFile.path,
+    );
+    return JavascriptPlugin._(pluginName, runtime);
+  }
+
+  {{#methods}}
+  @override
+  {{returnType}} {{name}}({{paramList}}) {{#isFuture}}async{{/isFuture}} {
+    final args = json.encode([{{argList}}]);
+    final script = '{{name}}(...$args)';
+    {{^isFuture}}
+    final evaluation = jsRuntime.evaluate(script);
+    final result = evaluation.rawResult;
+    {{/isFuture}}
+    
+    {{#isFuture}}
+    final evaluation = await jsRuntime.evaluateAsync(script);
+    jsRuntime.executePendingJob();
+    final promiseEvaluation = await jsRuntime.handlePromise(evaluation);
+    final result = await promiseEvaluation.rawResult;
+    {{/isFuture}}
+
+    return {{castResult}};
+  }
+
+  bool has{{capName}}() {
+    final evaluation = jsRuntime.evaluate('typeof {{name}} === "function"');
+    return evaluation.rawResult;
+  }
+
+  {{/methods}}
+}

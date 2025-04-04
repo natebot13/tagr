@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
+import 'package:tagr/plugin.g.dart';
 import 'package:tagr/src/constants.dart';
-import 'package:tagr/src/plugin.dart';
 
 part 'plugin_state.dart';
 
@@ -19,7 +19,7 @@ class PluginCubit extends Cubit<PluginState> {
   }
 
   void load() async {
-    final plugins = <String, Plugin>{};
+    final plugins = <String, JavascriptPlugin>{};
     await for (final pluginDir in pluginsDirectory.list()) {
       if (pluginDir is! Directory) continue;
       final plugin = await JavascriptPlugin.fromDirectory(pluginDir);
