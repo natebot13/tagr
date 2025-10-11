@@ -135,6 +135,7 @@ class VaultRepository {
 
   Future<void> _saveAndEmitVault(Directory root, Vault vault) async {
     final vaultDatabase = _vaultDatabaseFile(root);
+    await Directory(vaultDatabase.parent.path).create(recursive: true);
     if (kDebugMode) {
       const encoder = JsonEncoder.withIndent('  ');
       await File(

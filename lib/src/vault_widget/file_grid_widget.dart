@@ -48,52 +48,46 @@ class VaultSliverAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SelectionCubit, SelectionState>(
-      builder: (context, state) {
-        final multiSelect = state is SelectionMultiple;
-        final numSelected = state.selected.length;
-        final isChoosing = state is SelectionChoosing;
+    final selectionState = context.watch<SelectionCubit>().state;
+    final multiSelect = selectionState is SelectionMultiple;
+    final numSelected = selectionState.selected.length;
+    final isChoosing = selectionState is SelectionChoosing;
 
-        return SliverAppBar(
-          floating: true,
-          pinned: multiSelect || isChoosing,
-          automaticallyImplyLeading: true,
-          leading: multiSelect || isChoosing
-              ? IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: context.read<SelectionCubit>().unselect,
-                )
-              : null,
-          title: BlocBuilder<VaultCubit, VaultState>(
-            builder: (context, vaultState) {
-              if (vaultState is! VaultOpen) {
-                throw StateError('Vault not open');
-              }
-              return BlocBuilder<FilterCubit, FilterState>(
-                builder: (context, filterState) {
-                  return Row(
-                    children: [
-                      if (!multiSelect && !isChoosing)
-                        Text(path.basename(vaultState.root.path)),
-                      if (multiSelect) Text('$numSelected Selected'),
-                      if (isChoosing) const Text('Pick a file'),
-                      const Spacer(),
-                      if (filterState is FilterResults)
-                        Expanded(
-                          child: FilterField(vaultState, filterState.query),
-                        ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-          // actions: [TextField()],
+    return SliverAppBar(
+      floating: true,
+      pinned: multiSelect || isChoosing,
+      automaticallyImplyLeading: true,
+      leading: multiSelect || isChoosing
+          ? IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: context.read<SelectionCubit>().unselect,
+            )
+          : null,
+      title: Builder(builder: (context) {
+        final vaultState = context.watch<VaultCubit>().state;
+        if (vaultState is! VaultOpen) {
+          throw StateError('Vault not open');
+        }
+        final filterState = context.watch<FilterCubit>().state;
 
-          // pinned: true,
-          primary: true,
+        return Row(
+          children: [
+            if (!multiSelect && !isChoosing)
+              Text(path.basename(vaultState.root.path)),
+            if (multiSelect) Text('$numSelected Selected'),
+            if (isChoosing) const Text('Pick a file'),
+            const Spacer(),
+            if (filterState is FilterResults)
+              Expanded(
+                child: FilterField(vaultState, filterState.query),
+              ),
+          ],
         );
-      },
+      }),
+      // actions: [TextField()],
+
+      // pinned: true,
+      primary: true,
     );
   }
 }

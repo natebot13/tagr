@@ -63,6 +63,7 @@ final _supportedFileExtensions = <String, FileType>{
   '.mp4': FileType.video,
   '.mov': FileType.video,
   '.webm': FileType.video,
+  '.wav': FileType.audio,
 };
 // cSpell:enable
 

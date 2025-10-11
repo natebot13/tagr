@@ -11,7 +11,7 @@ Tag filtering is designed for simplicity, but can be as complicated as you need.
 - [x] simple tag search: 'dogs', 'cats dogs'
   - Finds files with the tag, no matter the value
 - [x] quoted text for tags with spaces: 'people "Japan Trip"'
-  - Since tags can be any string, use quotes in case the has spaces
+  - Since tags can be any string, use quotes in case the tag has spaces
 - [x] negative terms: '-people dogs'
   - explicitly ignores files with the negated tags
 - [x] expressions: 'dogs:1', 'cats:>5', 'amount_of_pie:<2*PI/3

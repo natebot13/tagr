@@ -20,11 +20,13 @@ class PluginCubit extends Cubit<PluginState> {
 
   void load() async {
     final plugins = <String, JavascriptPlugin>{};
-    await for (final pluginDir in pluginsDirectory.list()) {
-      if (pluginDir is! Directory) continue;
-      final plugin = await JavascriptPlugin.fromDirectory(pluginDir);
-      if (plugin == null) continue;
-      plugins[plugin.name] = plugin;
+    if (await pluginsDirectory.exists()) {
+      await for (final pluginDir in pluginsDirectory.list()) {
+        if (pluginDir is! Directory) continue;
+        final plugin = await JavascriptPlugin.fromDirectory(pluginDir);
+        if (plugin == null) continue;
+        plugins[plugin.name] = plugin;
+      }
     }
     emit(PluginsLoaded(plugins));
   }
